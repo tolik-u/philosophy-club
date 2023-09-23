@@ -1,7 +1,9 @@
 let members = [];
 let bottles = [];
 
-// Existing addMember() and updateMemberList() functions
+window.onload = function() {
+  updateMemberList();
+};
 
 function addBottle() {
   const bottleName = document.getElementById("bottleName").value;
@@ -27,30 +29,67 @@ function updateBottleList() {
   });
 }
 
-function addMember() {
-    const username = document.getElementById("username").value;
-    const status = document.getElementById("status").value;
-    
-    members.push({ username, status });
-    
-    // Clear input
-    document.getElementById("username").value = '';
-    
-    updateMemberList();
-  }
-  
-  function updateMemberList() {
-    const list = document.getElementById("membersList");
-    list.innerHTML = '';
-    
-    members.forEach(member => {
-      const listItem = document.createElement("li");
-      listItem.textContent = `${member.username} (${member.status})`;
-      list.appendChild(listItem);
-    });
-  }
+async function addMember() {
+  const name = document.getElementById("memberName").value;
+  const status = document.getElementById("memberStatus").value;
 
-function toggleAdmin() {
+  const response = await fetch("http://127.0.0.1:8080/add_member", {
+      method: "POST",
+      headers: {
+          "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name, status }),
+  });
+
+  if (response.ok) {
+    // Refresh the members list
+    updateMemberList();
+  } else {
+    console.error("Failed to add member");
+  }
+}
+
+async function updateMemberList() {
+  console.log("Function called");
+  const response = await fetch("http://127.0.0.1:8080/list_members");
+  const members = await response.json(); // Assuming the backend returns JSON
+
+  const list = document.getElementById("membersList");
+  list.innerHTML = '';
+  
+  members.forEach(member => {
+    const listItem = document.createElement("li");
+    listItem.textContent = `${member.name} (${member.status})`;
+    
+    const deleteButton = document.createElement("button");
+    deleteButton.textContent = "Delete";
+    deleteButton.onclick = function() {
+      deleteMember(member.name);
+    };
+
+    listItem.appendChild(deleteButton);
+    list.appendChild(listItem);
+  });
+}
+
+async function deleteMember(name) {
+  const response = await fetch("http://127.0.0.1:8080/delete_member", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ name: name })
+  });
+
+  if (response.ok) {
+    // Refresh the members list
+    updateMemberList();
+  } else {
+    console.error("Failed to delete member");
+  }
+}
+
+  function toggleAdmin() {
     const adminSection = document.getElementById("adminSection");
     if (adminSection.style.display === "none" || adminSection.style.display === "") {
       adminSection.style.display = "block";
@@ -59,22 +98,4 @@ function toggleAdmin() {
     }
   }
 
-// Fetch whiskeys when the page loads
-window.onload = function() {
-    fetchWhiskeys();
-  };
-  
-  function fetchWhiskeys() {
-    fetch('https://www.thecocktaildb.com/api/json/v1/1/filter.php?i=Whiskey')
-      .then(response => response.json())
-      .then(data => {
-        const datalist = document.getElementById('whiskeys');
-        data.drinks.forEach(drink => {
-          const option = document.createElement('option');
-          option.value = drink.strDrink;
-          datalist.appendChild(option);
-        });
-      })
-      .catch(error => console.error('Error fetching whiskeys:', error));
-  }
   
