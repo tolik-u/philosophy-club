@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Philosophy Club</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/lux/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1 class="text-center mt-5">Philosophy Club</h1>
+    <blockquote class="blockquote text-center mt-3">
+        <p class="mb-0">What can be said at all can be said clearly, and what we cannot talk about we must pass over in silence.</p>
+        <footer class="blockquote-footer">Ludwig Wittgenstein</footer>
+      </blockquote>    
+    <div id="listBottlesDiv" class="mt-5">
+      <h2>Stored Bottles</h2>
+      <ul id="bottlesList" class="list-group">
+        <!-- Bottles will be listed here -->
+      </ul>
+    </div>
+
+    <div id="listMembersDiv" class="mt-5">
+      <h2>Members List</h2>
+      <ul id="membersList" class="list-group">
+        <!-- Members will be listed here -->
+      </ul>
+    </div>
+    <button id="toggleAdminBtn" class="btn btn-secondary mt-5" onclick="toggleAdmin()">Admin</button>
+    <div id="adminSection" class="mt-5" style="display:none;">
+      <h2>Admin Section</h2>
+      <div id="addMemberDiv" class="mt-5">
+        <h2>Add Member</h2>
+        <div class="form-group">
+          <input type="text" id="username" class="form-control" placeholder="Username">
+        </div>
+        <div class="form-group">
+          <select id="status" class="form-control">
+            <option value="Extended">Extended Member</option>
+            <option value="Core">Core Member</option>
+            <option value="Contributor">Contributor Member</option>
+            <option value="Opportunity">Opportunity Member</option>
+            <option value="Guest">Guest</option>
+          </select>
+        </div>
+        <button onclick="addMember()" class="btn btn-primary">Add</button>
+      </div>
+      <!-- <div id="addBottleDiv">
+        <h3>Add Bottle</h3>
+        <input type="text" id="bottleName" class="form-control" placeholder="Bottle Name">
+        <input type="number" id="bottlePrice" class="form-control mt-2" placeholder="Price">
+        <button onclick="addBottle()" class="btn btn-primary mt-2">Add</button>
+      </div> -->
+      <div id="addBottleDiv">
+        <h3>Add Bottle</h3>
+        <input list="whiskeys" id="bottleName" class="form-control" placeholder="Bottle Name">
+        <datalist id="whiskeys">
+        </datalist>
+        <input type="number" id="bottlePrice" class="form-control mt-2" placeholder="Price">
+        <button onclick="addBottle()" class="btn btn-primary mt-2">Add</button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="script.js"></script>
+</body>
+</html>
