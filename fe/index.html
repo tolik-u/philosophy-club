@@ -27,7 +27,6 @@
     </div>
     <button id="toggleAdminBtn" class="btn btn-secondary mt-5" onclick="toggleAdmin()">Admin</button>
     <div id="adminSection" class="mt-5" style="display:none;">
-      <h2>Admin Section</h2>
       <div id="addMemberDiv" class="mt-5">
         <h2>Add Member</h2>
         <div class="form-group">
@@ -44,8 +43,15 @@
         </div>
         <button onclick="addMember()" class="btn btn-primary">Add</button>
       </div>
-      <div id="whiskySearchDiv">
-        <h3>Search for a Whiskey</h3>
+      <div id="deleteMemberDiv" class="mt-5">
+        <h2>Delete Member</h2>
+        <div id="memberDropdown" class="dropdown-content">
+        <!-- Members will be listed here -->
+        </div>
+        <button onclick="deleteMember()" class="btn btn-primary mt-2">Delete</button>
+      </div>
+      <div id="whiskySearchDiv" class="mt-5">
+        <h2>Search for a Whiskey and Add It to the Club Vault</h2>
         <input type="text" id="whiskySearchInput" placeholder="Enter whiskey name" oninput="searchWhisky()">
         <div id="whiskyDropdown" class="dropdown-content">
           <!-- Whiskies will be listed here -->

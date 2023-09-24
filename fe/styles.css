@@ -36,9 +36,16 @@ body {
   
   .dropdown-item {
     padding: 8px;
+    color: #a67c52;
     cursor: pointer;
   }
   
   .dropdown-item:hover {
     background-color: #f1f1f1;
+    color: #000;
+  }
+
+  .selected-item {
+    background-color: #f1f1f1;
+    color: #000;
   }

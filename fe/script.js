@@ -23,9 +23,9 @@ function updateBottleList() {
   list.innerHTML = '';
   
   bottles.forEach(bottle => {
-    const listItem = document.createElement("li");
-    listItem.textContent = `${bottle.bottleName} (Price: ${bottle.bottlePrice})`;
-    list.appendChild(listItem);
+    const item = document.createElement("li");
+    item.textContent = `${bottle.bottleName} (Price: ${bottle.bottlePrice})`;
+    list.appendChild(item);
   });
 }
 
@@ -50,7 +50,6 @@ async function addMember() {
 }
 
 async function updateMemberList() {
-  console.log("Function called");
   const response = await fetch("http://127.0.0.1:8080/list_members");
   const members = await response.json(); // Assuming the backend returns JSON
 
@@ -58,27 +57,38 @@ async function updateMemberList() {
   list.innerHTML = '';
   
   members.forEach(member => {
-    const listItem = document.createElement("li");
-    listItem.textContent = `${member.name} (${member.status})`;
-    
-    const deleteButton = document.createElement("button");
-    deleteButton.textContent = "Delete";
-    deleteButton.onclick = function() {
-      deleteMember(member.name);
-    };
+    const item = document.createElement("li");
+    item.textContent = `${member.name} (${member.status})`;
+    list.appendChild(item);
+  });
 
-    listItem.appendChild(deleteButton);
-    list.appendChild(listItem);
+  const dropdown = document.getElementById('memberDropdown');
+  dropdown.innerHTML = '';
+
+  members.forEach(member => {
+    const item = document.createElement("li");
+    item.textContent = `${member.name}`;
+    item.className = 'dropdown-item'; // Add a class for styling
+    item.onclick = function() {
+      selectedMember = item.textContent; // Set the selected member
+      Array.from(dropdown.children).forEach(child => {
+        child.classList.remove('selected-item');
+      });
+      // Add 'selected-item' class to clicked item
+      item.classList.add('selected-item');
+    };
+    dropdown.appendChild(item);
   });
 }
 
-async function deleteMember(name) {
+async function deleteMember() {
+  if (selectedMember) {
   const response = await fetch("http://127.0.0.1:8080/delete_member", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ name: name })
+    body: JSON.stringify({ name: selectedMember })
   });
 
   if (response.ok) {
@@ -87,6 +97,7 @@ async function deleteMember(name) {
   } else {
     console.error("Failed to delete member");
   }
+}
 }
 
 async function searchWhisky() {
@@ -104,6 +115,11 @@ async function searchWhisky() {
     item.onclick = function() {
       selectedWhisky = whisky; // Set the selected whisky
       document.getElementById('whiskySearchInput').value = whisky.name; // Update the input field
+      Array.from(dropdown.children).forEach(child => {
+        child.classList.remove('selected-item');
+      });
+      // Add 'selected-item' class to clicked item
+      item.classList.add('selected-item');
     };
     dropdown.appendChild(item);
   });
@@ -113,7 +129,7 @@ async function searchWhisky() {
 function addBottle() {
   if (selectedWhisky) {
     const list = document.getElementById('bottlesList');
-    const listItem = document.createElement('li');
+    const item = document.createElement('li');
     const price = document.getElementById('bottlePrice').value;
     if (!price) {
       alert('Please enter a price');
@@ -122,8 +138,8 @@ function addBottle() {
     // Join all fields with commas and add the price
     const whiskyDetails = `${Object.values(selectedWhisky).join(', ')}, Price: ${price}`;
     
-    listItem.textContent = whiskyDetails;
-    list.appendChild(listItem);
+    item.textContent = whiskyDetails;
+    list.appendChild(item);
     document.getElementById('whiskyDropdown').innerHTML = '';
     document.getElementById('whiskySearchInput').value = '';
     document.getElementById('bottlePrice').value = '';
