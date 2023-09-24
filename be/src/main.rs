@@ -1,6 +1,6 @@
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use actix_cors::Cors;
-use mongodb::{options::ClientOptions, Client, Collection, bson::Document, bson::doc};
+use mongodb::{options::ClientOptions, Client, Collection, bson::Document, bson::doc, options::AggregateOptions};
 use serde::{Serialize, Deserialize};
 use futures::StreamExt;
 use std::sync::Mutex;
@@ -16,6 +16,12 @@ fn get_members_collection(client: &web::Data<Mutex<Client>>) -> Collection<Docum
     db.collection::<Document>("members")
 }
 
+fn get_whiskies_collection(client: &web::Data<Mutex<Client>>) -> Collection<Document> {
+    let client = client.lock().unwrap();
+    let db = client.database("philosophy_club");
+    db.collection::<Document>("whiskies")
+}
+
 #[derive(Serialize, Deserialize)]
 struct Member {
     name: String,
@@ -24,6 +30,20 @@ struct Member {
 #[derive(Serialize, Deserialize)]
 struct DeleteMember {
     name: String,
+}
+
+#[derive(Deserialize)]
+struct SearchQuery {
+    query: String,
+}
+
+#[derive(Serialize, Deserialize)]
+struct Whisky {
+    name: String,
+    age: String,
+    strength: String,
+    bottle_size: String,
+    year_bottled: String
 }
 
 async fn add_member(data: web::Json<Member>, client: web::Data<Mutex<Client>>) -> impl Responder {
@@ -87,6 +107,54 @@ async fn delete_member(data: web::Json<DeleteMember>, client: web::Data<Mutex<Cl
     HttpResponse::Ok().body("Member deleted")
 }
 
+async fn search_whisky(query: web::Query<SearchQuery>, client: web::Data<Mutex<Client>>) -> impl Responder {
+    let coll = get_whiskies_collection(&client);
+
+    let pipeline = vec![
+        doc! {
+            "$search": {
+                "index": "whiskies_idx",
+                "autocomplete": {
+                    "query": &query.query,
+                    "path": "name",  // Searching by the "name" field
+                    "tokenOrder": "sequential"
+                }
+            }
+        },
+        doc! {
+            "$limit": 10  // Limit the number of results
+        }
+    ];
+
+    let options = AggregateOptions::builder().build();
+
+    let mut cursor = match coll.aggregate(pipeline, options).await {
+        Ok(cursor) => cursor,
+        Err(e) => {
+            eprintln!("MongoDB Error: {:?}", e);
+            return HttpResponse::InternalServerError().body("Failed to execute search query");
+        }
+    };
+    
+    let mut results = Vec::new();
+    while let Some(result) = cursor.next().await {
+        match result {
+            Ok(doc) => {
+                if let Ok(name) = doc.get_str("name") {
+                    results.push(doc! { "name": name });
+                }
+            },
+            Err(e) => {
+                eprintln!("Error iterating cursor: {:?}", e);
+                continue;
+            }
+        }
+    }
+
+    HttpResponse::Ok().json(results)
+}
+
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let client = init_mongo_client().await;
@@ -102,6 +170,8 @@ async fn main() -> std::io::Result<()> {
             .route("/add_member", web::post().to(add_member))
             .route("/list_members", web::get().to(list_members))
             .route("/delete_member", web::post().to(delete_member))
+            .route("/search_whisky", web::get().to(search_whisky))
+
     })
     .bind("127.0.0.1:8080")?
     .run()

@@ -44,19 +44,15 @@
         </div>
         <button onclick="addMember()" class="btn btn-primary">Add</button>
       </div>
-      <!-- <div id="addBottleDiv">
-        <h3>Add Bottle</h3>
-        <input type="text" id="bottleName" class="form-control" placeholder="Bottle Name">
+      <div id="whiskySearchDiv">
+        <h3>Search for a Whiskey</h3>
+        <input type="text" id="whiskySearchInput" placeholder="Enter whiskey name" oninput="searchWhisky()">
+        <div id="whiskyDropdown" class="dropdown-content">
+          <!-- Whiskies will be listed here -->
+        </div>
         <input type="number" id="bottlePrice" class="form-control mt-2" placeholder="Price">
         <button onclick="addBottle()" class="btn btn-primary mt-2">Add</button>
-      </div> -->
-      <div id="addBottleDiv">
-        <h3>Add Bottle</h3>
-        <input list="whiskeys" id="bottleName" class="form-control" placeholder="Bottle Name">
-        <datalist id="whiskeys">
-        </datalist>
-        <input type="number" id="bottlePrice" class="form-control mt-2" placeholder="Price">
-        <button onclick="addBottle()" class="btn btn-primary mt-2">Add</button>
+        <span id="addedMsg"></span>
       </div>
     </div>
   </div>

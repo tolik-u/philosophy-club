@@ -89,6 +89,53 @@ async function deleteMember(name) {
   }
 }
 
+async function searchWhisky() {
+  const query = document.getElementById('whiskySearchInput').value;
+  const response = await fetch(`http://127.0.0.1:8080/search_whisky?query=${query}`);
+  const results = await response.json();
+
+  const dropdown = document.getElementById('whiskyDropdown');
+  dropdown.innerHTML = '';
+
+  results.forEach(whisky => {
+    const item = document.createElement('div');
+    item.textContent = whisky.name;
+    item.className = 'dropdown-item'; // Add a class for styling
+    item.onclick = function() {
+      selectedWhisky = whisky; // Set the selected whisky
+      document.getElementById('whiskySearchInput').value = whisky.name; // Update the input field
+    };
+    dropdown.appendChild(item);
+  });
+}
+
+
+function addBottle() {
+  if (selectedWhisky) {
+    const list = document.getElementById('bottlesList');
+    const listItem = document.createElement('li');
+    const price = document.getElementById('bottlePrice').value;
+    if (!price) {
+      alert('Please enter a price');
+      return;
+    }
+    // Join all fields with commas and add the price
+    const whiskyDetails = `${Object.values(selectedWhisky).join(', ')}, Price: ${price}`;
+    
+    listItem.textContent = whiskyDetails;
+    list.appendChild(listItem);
+    document.getElementById('whiskyDropdown').innerHTML = '';
+    document.getElementById('whiskySearchInput').value = '';
+    document.getElementById('bottlePrice').value = '';
+
+    // Display "Added!" message
+    const addedMsg = document.getElementById('addedMsg');
+    addedMsg.textContent = 'Added!';
+    setTimeout(() => addedMsg.textContent = '', 3000); // Remove the message after 3 seconds
+    
+  }
+}
+
   function toggleAdmin() {
     const adminSection = document.getElementById("adminSection");
     if (adminSection.style.display === "none" || adminSection.style.display === "") {

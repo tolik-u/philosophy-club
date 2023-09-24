@@ -27,3 +27,18 @@ body {
     font-style: italic;
     font-size: 1.2em;
   }
+
+  .dropdown-content {
+    border: 1px solid #ccc;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  .dropdown-item {
+    padding: 8px;
+    cursor: pointer;
+  }
+  
+  .dropdown-item:hover {
+    background-color: #f1f1f1;
+  }
