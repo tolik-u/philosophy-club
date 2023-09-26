@@ -8,6 +8,7 @@ use std::sync::Mutex;
 extern crate dotenv;
 
 async fn init_mongo_client() -> Client {
+    dotenv::dotenv().ok();
     let client_options = ClientOptions::parse(&std::env::var("MONGODB_URL").unwrap()).await.unwrap();
     Client::with_options(client_options).unwrap()
 }
