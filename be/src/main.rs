@@ -5,6 +5,8 @@ use serde::{Serialize, Deserialize};
 use futures::StreamExt;
 use std::sync::Mutex;
 
+extern crate dotenv;
+
 async fn init_mongo_client() -> Client {
     let client_options = ClientOptions::parse(&std::env::var("MONGODB_URL").unwrap()).await.unwrap();
     Client::with_options(client_options).unwrap()
