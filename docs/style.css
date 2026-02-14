@@ -612,8 +612,19 @@ input:focus, textarea:focus, select:focus {
   margin-bottom: 1rem;
 }
 
+.search-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
 .search-input {
-  width: 100%;
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.btn-search {
+  white-space: nowrap;
   margin-bottom: 0;
 }
 
@@ -674,4 +685,13 @@ input:focus, textarea:focus, select:focus {
   font-size: 0.8rem;
   color: #a0a0a0;
   margin-top: 0.15rem;
+}
+
+.search-hint {
+  padding: 0.5rem 0.8rem;
+  font-size: 0.8rem;
+  color: #a0a0a0;
+  font-style: italic;
+  text-align: center;
+  border-top: 1px solid rgba(212, 175, 55, 0.15);
 }

@@ -30,13 +30,16 @@ const app = createApp({
 
             <!-- Search from catalog -->
             <div v-if="!editingId" class="search-wrapper">
-              <input
-                v-model="searchQuery"
-                @input="onSearchInput"
-                type="text"
-                placeholder="Search whisky catalog to pre-fill..."
-                class="search-input"
-              >
+              <div class="search-row">
+                <input
+                  v-model="searchQuery"
+                  @keydown.enter.prevent="doSearch"
+                  type="text"
+                  placeholder="Search whisky catalog to pre-fill..."
+                  class="search-input"
+                >
+                <button type="button" @click="doSearch" class="btn-search">Search</button>
+              </div>
               <div v-if="searchResults.length > 0" class="search-dropdown">
                 <div
                   v-for="(result, idx) in searchResults"
@@ -48,6 +51,9 @@ const app = createApp({
                   <span class="search-result-details">
                     {{ [result.age, result.strength, result.bottle_size].filter(Boolean).join(' · ') }}
                   </span>
+                </div>
+                <div v-if="searchResults.length >= 10" class="search-hint">
+                  Showing top 10 — refine your search for more results
                 </div>
               </div>
             </div>
@@ -140,7 +146,6 @@ const app = createApp({
     const form = ref({ name: "", age: "", strength: "", bottle_size: "", year_bottled: "", price: "" });
     const searchQuery = ref("");
     const searchResults = ref([]);
-    let searchTimer = null;
 
     const token = localStorage.getItem("authToken");
     const role = localStorage.getItem("userRole");
@@ -280,25 +285,22 @@ const app = createApp({
       }
     }
 
-    function onSearchInput() {
-      clearTimeout(searchTimer);
+    async function doSearch() {
       const q = searchQuery.value.trim();
       if (q.length < 2) {
         searchResults.value = [];
         return;
       }
-      searchTimer = setTimeout(async () => {
-        try {
-          const res = await fetch(`${apiBase}/whiskies/search?q=${encodeURIComponent(q)}`, {
-            headers: { "Authorization": `Bearer ${token}` }
-          });
-          if (res.ok) {
-            searchResults.value = await res.json();
-          }
-        } catch (e) {
-          searchResults.value = [];
+      try {
+        const res = await fetch(`${apiBase}/whiskies/search?q=${encodeURIComponent(q)}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          searchResults.value = await res.json();
         }
-      }, 300);
+      } catch (e) {
+        searchResults.value = [];
+      }
     }
 
     function selectResult(result) {
@@ -325,7 +327,7 @@ const app = createApp({
       formSuccess,
       searchQuery,
       searchResults,
-      onSearchInput,
+      doSearch,
       selectResult,
       saveBottle,
       startEdit,
