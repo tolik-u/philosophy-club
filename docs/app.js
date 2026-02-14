@@ -128,28 +128,20 @@ const app = createApp({
         if (res.ok) {
           const bottlesData = await res.json();
           bottles.value = bottlesData;
-          console.log(`✓ Loaded ${bottlesData.length} bottles from backend`);
         } else {
-          console.error("Failed to fetch bottles:", res.status);
           // Keep empty array if fetch fails
         }
       } catch (error) {
-        console.error("Fetch bottles error:", error);
         // Keep empty array if fetch fails
       }
     };
 
     // Go to Admin Panel
     const goToAdminPanel = () => {
-      console.log("[*] Admin Panel clicked - page not implemented yet");
       alert("Admin Panel coming soon!");
     };
 
     // Sign in with Google is now handled by Google's rendered button
-    const signInWithGoogle = () => {
-      console.log("[*] Google button click handled by Google's SDK");
-    };
-
     // Initialize Google on page load
     const initGoogle = () => {
       const attemptInit = () => {
@@ -158,7 +150,6 @@ const app = createApp({
             client_id: googleClientId.value,
             callback: window.handleCredentialResponse
           });
-          console.log("[✓] Google Sign-In initialized");
 
           // Render button into the container
           nextTick(() => {
@@ -171,7 +162,6 @@ const app = createApp({
                 text: "signin_with",
                 logo_alignment: "left"
               });
-              console.log("[✓] Google button rendered");
             }
           });
         } else {
@@ -236,12 +226,10 @@ const app = createApp({
           startCountdownTimer();
           fetchBottles();
 
-          console.log(`✓ Logged in as ${data.name} (${data.email})`);
         } else {
           alert("Login failed");
         }
       } catch (error) {
-        console.error("Login error:", error);
         alert("Login error");
       }
     };
@@ -258,16 +246,22 @@ const app = createApp({
       userName.value = "";
       userRole.value = "";
       isLoggedIn.value = false;
-
-      console.log("✓ Logged out");
     };
 
-    // Re-render Google button when login page appears
+    // Re-render Google button when login page appears after logout
     watch(isLoggedIn, async (newVal) => {
       if (!newVal && window.google && window.google.accounts && window.google.accounts.id) {
-        // Refresh Google Sign-In when logging out
         await nextTick();
-        console.log("[✓] Login state changed, Google ready for next sign-in");
+        const container = document.querySelector("#google_button_container");
+        if (container) {
+          window.google.accounts.id.renderButton(container, {
+            type: "standard",
+            size: "large",
+            theme: "filled_black",
+            text: "signin_with",
+            logo_alignment: "left"
+          });
+        }
       }
     });
 
