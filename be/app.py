@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from pymongo import MongoClient
 from datetime import datetime
 from functools import wraps
@@ -14,6 +16,7 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app, origins=["https://club.linux.yoga", "http://localhost:8000"])
+limiter = Limiter(get_remote_address, app=app, default_limits=["60 per minute"])
 
 # MongoDB setup
 MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://127.0.0.1:27017")
@@ -68,6 +71,7 @@ def require_auth(f):
 # ============= Authentication Endpoints =============
 
 @app.route("/login", methods=["POST"])
+@limiter.limit("10 per minute")
 def login():
     """Google login endpoint"""
     try:
