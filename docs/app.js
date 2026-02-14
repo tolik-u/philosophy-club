@@ -122,7 +122,9 @@ const app = createApp({
     // Fetch bottles from backend
     const fetchBottles = async () => {
       try {
-        const res = await fetch(`${apiBase}/bottles`);
+        const res = await fetch(`${apiBase}/bottles`, {
+          headers: { "Authorization": `Bearer ${userToken.value}` }
+        });
         if (res.ok) {
           const bottlesData = await res.json();
           bottles.value = bottlesData;

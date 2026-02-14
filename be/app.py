@@ -2,10 +2,11 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from pymongo import MongoClient
 from datetime import datetime
+from functools import wraps
 import os
 from dotenv import load_dotenv
-import json
-import base64
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
 # ============= Setup =============
 
@@ -18,6 +19,11 @@ CORS(app)
 MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://127.0.0.1:27017")
 client = MongoClient(MONGODB_URL)
 db = client["philosophy_club"]
+
+GOOGLE_CLIENT_ID = os.getenv(
+    "GOOGLE_CLIENT_ID",
+    "256483321761-a4hsvv36hbeslq1l3vjm0souh7988fir.apps.googleusercontent.com"
+)
 
 print("\n╔════════════════════════════════════════╗")
 print("║  Philosophy Club Backend Starting...  ║")
@@ -33,51 +39,31 @@ except Exception as e:
 
 # ============= Helper Functions =============
 
-def extract_email_from_token(token):
-    """Extract email from Google JWT token"""
+def verify_google_token(token):
+    """Verify Google JWT token and return user info"""
     try:
-        # Split the token
-        parts = token.split('.')
-        if len(parts) != 3:
-            return None
-        
-        # Decode the payload (add padding if needed)
-        payload = parts[1]
-        padding = 4 - len(payload) % 4
-        if padding != 4:
-            payload += '=' * padding
-        
-        # Base64 decode
-        decoded = base64.urlsafe_b64decode(payload)
-        payload_json = json.loads(decoded)
-        
-        return payload_json.get("email")
-    except Exception as e:
-        print(f"[!] Error extracting email from token: {e}")
-        return None
-
-def extract_user_info_from_token(token):
-    """Extract email and name from Google JWT token"""
-    try:
-        # Split the token
-        parts = token.split('.')
-        if len(parts) != 3:
-            return None, None
-        
-        # Decode the payload (add padding if needed)
-        payload = parts[1]
-        padding = 4 - len(payload) % 4
-        if padding != 4:
-            payload += '=' * padding
-        
-        # Base64 decode
-        decoded = base64.urlsafe_b64decode(payload)
-        payload_json = json.loads(decoded)
-        
-        return payload_json.get("email"), payload_json.get("name")
-    except Exception as e:
-        print(f"[!] Error extracting user info from token: {e}")
+        idinfo = id_token.verify_oauth2_token(
+            token, google_requests.Request(), GOOGLE_CLIENT_ID
+        )
+        return idinfo.get("email"), idinfo.get("name")
+    except ValueError as e:
+        print(f"[!] Token verification failed: {e}")
         return None, None
+
+def require_auth(f):
+    """Decorator to require a valid Google token in Authorization header"""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return jsonify({"error": "Missing or invalid Authorization header"}), 401
+        token = auth_header.split(" ", 1)[1]
+        email, _ = verify_google_token(token)
+        if not email:
+            return jsonify({"error": "Invalid or expired token"}), 401
+        request.user_email = email
+        return f(*args, **kwargs)
+    return decorated
 
 # ============= Authentication Endpoints =============
 
@@ -91,8 +77,8 @@ def login():
         if not token:
             return jsonify({"error": "Missing token"}), 400
         
-        # Extract email and name from token
-        email, name = extract_user_info_from_token(token)
+        # Verify token with Google and extract user info
+        email, name = verify_google_token(token)
         if not email:
             return jsonify({"error": "Invalid token"}), 401
         
@@ -137,6 +123,7 @@ def login():
 # ============= User Management Endpoints =============
 
 @app.route("/users", methods=["GET"])
+@require_auth
 def list_users():
     """List all users"""
     try:
@@ -150,6 +137,7 @@ def list_users():
 # ============= Bottles Management Endpoints =============
 
 @app.route("/bottles", methods=["GET"])
+@require_auth
 def get_bottles():
     """Get all bottles from clubWhiskies collection"""
     try:
