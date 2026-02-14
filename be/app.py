@@ -28,16 +28,16 @@ GOOGLE_CLIENT_ID = os.getenv(
     "256483321761-a4hsvv36hbeslq1l3vjm0souh7988fir.apps.googleusercontent.com"
 )
 
-print("\n╔════════════════════════════════════════╗")
-print("║  Philosophy Club Backend Starting...  ║")
-print("╚════════════════════════════════════════╝\n")
+print("\n========================================")
+print("  Philosophy Club Backend Starting...  ")
+print("========================================\n")
 
 try:
     # Test MongoDB connection
     client.admin.command('ping')
-    print("[✓] MongoDB connected successfully")
+    print("[+] MongoDB connected successfully")
 except Exception as e:
-    print(f"[✗] MongoDB connection error: {e}")
+    print(f"[!] MongoDB connection error: {e}")
     raise
 
 # ============= Helper Functions =============
@@ -185,5 +185,5 @@ def server_error(e):
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8080))
     print(f"[*] Binding to 0.0.0.0:{port}...")
-    print(f"[✓] Backend ready! Visit http://127.0.0.1:{port}/health\n")
+    print(f"[+] Backend ready! Visit http://127.0.0.1:{port}/health\n")
     app.run(host="0.0.0.0", port=port, debug=False)
