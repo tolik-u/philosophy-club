@@ -3,6 +3,7 @@ from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from pymongo import MongoClient
+from bson import ObjectId
 from datetime import datetime
 from functools import wraps
 import os
@@ -65,6 +66,16 @@ def require_auth(f):
         if not email:
             return jsonify({"error": "Invalid or expired token"}), 401
         request.user_email = email
+        return f(*args, **kwargs)
+    return decorated
+
+def require_admin(f):
+    """Decorator to require admin role (must be used after require_auth)"""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        user = db["users"].find_one({"email": request.user_email})
+        if not user or user.get("role") != "admin":
+            return jsonify({"error": "Admin access required"}), 403
         return f(*args, **kwargs)
     return decorated
 
@@ -147,21 +158,107 @@ def get_bottles():
     try:
         bottles_collection = db["clubWhiskies"]
         bottles_cursor = bottles_collection.find({})
-        
+
         bottles = []
         for bottle in bottles_cursor:
-            # Map MongoDB schema to frontend expected format
             bottles.append({
+                "id": str(bottle["_id"]),
                 "name": bottle.get("name", ""),
-                "distillery": bottle.get("name", "").split()[0],  # Extract first word as distillery
                 "age": bottle.get("age", "Not stated"),
-                "abv": bottle.get("strength", "N/A")
+                "strength": bottle.get("strength", "N/A")
             })
-        
+
         return jsonify(bottles), 200
     except Exception as e:
         print(f"[!] Get bottles error: {e}")
         return jsonify({"error": "Failed to fetch bottles"}), 500
+
+@app.route("/bottles", methods=["POST"])
+@require_auth
+@require_admin
+@limiter.limit("30 per minute")
+def create_bottle():
+    """Create a new bottle (admin only)"""
+    try:
+        data = request.get_json()
+        name = data.get("name", "").strip()
+        age = data.get("age", "").strip()
+        strength = data.get("strength", "").strip()
+
+        if not name:
+            return jsonify({"error": "Name is required"}), 400
+
+        bottle = {
+            "name": name,
+            "age": age or "Not stated",
+            "strength": strength or "N/A",
+            "created_at": datetime.utcnow().isoformat()
+        }
+
+        result = db["clubWhiskies"].insert_one(bottle)
+        bottle["id"] = str(result.inserted_id)
+        del bottle["_id"]
+        return jsonify(bottle), 201
+    except Exception as e:
+        print(f"[!] Create bottle error: {e}")
+        return jsonify({"error": "Failed to create bottle"}), 500
+
+@app.route("/bottles/<bottle_id>", methods=["PUT"])
+@require_auth
+@require_admin
+@limiter.limit("30 per minute")
+def update_bottle(bottle_id):
+    """Update a bottle (admin only)"""
+    try:
+        data = request.get_json()
+        update_fields = {}
+
+        if "name" in data:
+            name = data["name"].strip()
+            if not name:
+                return jsonify({"error": "Name cannot be empty"}), 400
+            update_fields["name"] = name
+        if "age" in data:
+            update_fields["age"] = data["age"].strip() or "Not stated"
+        if "strength" in data:
+            update_fields["strength"] = data["strength"].strip() or "N/A"
+
+        if not update_fields:
+            return jsonify({"error": "No fields to update"}), 400
+
+        result = db["clubWhiskies"].update_one(
+            {"_id": ObjectId(bottle_id)},
+            {"$set": update_fields}
+        )
+
+        if result.matched_count == 0:
+            return jsonify({"error": "Bottle not found"}), 404
+
+        updated = db["clubWhiskies"].find_one({"_id": ObjectId(bottle_id)})
+        return jsonify({
+            "id": str(updated["_id"]),
+            "name": updated.get("name", ""),
+            "age": updated.get("age", "Not stated"),
+            "strength": updated.get("strength", "N/A")
+        }), 200
+    except Exception as e:
+        print(f"[!] Update bottle error: {e}")
+        return jsonify({"error": "Failed to update bottle"}), 500
+
+@app.route("/bottles/<bottle_id>", methods=["DELETE"])
+@require_auth
+@require_admin
+@limiter.limit("30 per minute")
+def delete_bottle(bottle_id):
+    """Delete a bottle (admin only)"""
+    try:
+        result = db["clubWhiskies"].delete_one({"_id": ObjectId(bottle_id)})
+        if result.deleted_count == 0:
+            return jsonify({"error": "Bottle not found"}), 404
+        return jsonify({"message": "Bottle deleted"}), 200
+    except Exception as e:
+        print(f"[!] Delete bottle error: {e}")
+        return jsonify({"error": "Failed to delete bottle"}), 500
 
 # ============= Health Check =============
 

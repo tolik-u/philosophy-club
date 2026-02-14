@@ -361,6 +361,101 @@ table td strong {
   color: #f0f0f0;
 }
 
+/* ============= Admin Panel ============= */
+
+.admin-form-section {
+  padding: 2rem;
+}
+
+.admin-form-section h3 {
+  margin-top: 0;
+  color: var(--color-gold);
+  border-bottom: 2px solid rgba(212, 175, 55, 0.5);
+  padding-bottom: 0.5rem;
+}
+
+.admin-form-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.admin-form-actions button {
+  width: auto;
+}
+
+.btn-cancel {
+  background: transparent !important;
+  color: #a0a0a0 !important;
+  border: 1px solid #a0a0a0 !important;
+}
+
+.btn-cancel:hover {
+  color: #e0e0e0 !important;
+  border-color: #e0e0e0 !important;
+}
+
+.btn-edit,
+.btn-delete {
+  padding: 0.3rem 0.8rem !important;
+  font-size: 0.85rem !important;
+  margin: 0 !important;
+}
+
+.btn-delete {
+  background: transparent !important;
+  color: #dc3545 !important;
+  border: 1px solid #dc3545 !important;
+}
+
+.btn-delete:hover {
+  background: #dc3545 !important;
+  color: #fff !important;
+}
+
+.btn-edit {
+  background: transparent !important;
+  color: var(--color-gold) !important;
+  border: 1px solid var(--color-gold) !important;
+}
+
+.btn-edit:hover {
+  background: var(--color-gold) !important;
+  color: var(--color-navy) !important;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-back {
+  display: inline-block;
+  padding: 0.6rem 1.5rem;
+  background: linear-gradient(135deg, var(--color-gold) 0%, #c9a227 100%);
+  color: var(--color-navy);
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 600;
+  font-family: 'Georgia', serif;
+  transition: all 0.3s ease;
+}
+
+.btn-back:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+}
+
+.form-error {
+  color: #dc3545 !important;
+  margin-top: 0.5rem;
+}
+
+.form-success {
+  color: #28a745 !important;
+  margin-top: 0.5rem;
+}
+
 /* ============= Pico CSS Overrides ============= */
 
 button, input[type="button"], input[type="reset"], input[type="submit"] {

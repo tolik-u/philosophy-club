@@ -1,0 +1,246 @@
+const { createApp, ref, onMounted } = Vue;
+
+const app = createApp({
+  template: `
+    <div class="app-container">
+      <!-- Access Denied -->
+      <div v-if="accessDenied" class="login-page">
+        <article class="login-card">
+          <h1>Access Denied</h1>
+          <p>You must be an admin to view this page.</p>
+          <a href="index.html" class="btn-back">Back to Main Page</a>
+        </article>
+      </div>
+
+      <!-- Admin Panel -->
+      <div v-else-if="isReady" class="main-page">
+        <nav>
+          <ul>
+            <li><strong>Admin Panel</strong></li>
+          </ul>
+          <ul>
+            <li><a href="index.html" class="btn-logout">Back to Main</a></li>
+          </ul>
+        </nav>
+
+        <main class="container">
+          <!-- Add / Edit Bottle Form -->
+          <article class="admin-form-section">
+            <h3>{{ editingId ? 'Edit Bottle' : 'Add Bottle' }}</h3>
+            <form @submit.prevent="saveBottle">
+              <div class="grid">
+                <label>
+                  Name *
+                  <input v-model="form.name" type="text" placeholder="e.g. Lagavulin 16" required>
+                </label>
+                <label>
+                  Age
+                  <input v-model="form.age" type="text" placeholder="e.g. 16 years">
+                </label>
+                <label>
+                  Strength
+                  <input v-model="form.strength" type="text" placeholder="e.g. 43%">
+                </label>
+              </div>
+              <div class="admin-form-actions">
+                <button type="submit">{{ editingId ? 'Update' : 'Add Bottle' }}</button>
+                <button v-if="editingId" type="button" class="btn-cancel" @click="cancelEdit">Cancel</button>
+              </div>
+              <p v-if="formError" class="form-error">{{ formError }}</p>
+              <p v-if="formSuccess" class="form-success">{{ formSuccess }}</p>
+            </form>
+          </article>
+
+          <!-- Bottles Table -->
+          <article class="bottles-section">
+            <h3>Bottles in Stock ({{ bottles.length }})</h3>
+            <div v-if="loading">Loading...</div>
+            <div v-else-if="bottles.length === 0">No bottles in stock</div>
+            <table v-else>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Age</th>
+                  <th>Strength</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="bottle in bottles" :key="bottle.id">
+                  <td><strong>{{ bottle.name }}</strong></td>
+                  <td>{{ bottle.age }}</td>
+                  <td>{{ bottle.strength }}</td>
+                  <td class="actions-cell">
+                    <button class="btn-edit" @click="startEdit(bottle)">Edit</button>
+                    <button class="btn-delete" @click="deleteBottle(bottle)">Delete</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </article>
+        </main>
+      </div>
+    </div>
+  `,
+
+  setup() {
+    const apiBase = "https://philosophy-club.onrender.com";
+    const isReady = ref(false);
+    const accessDenied = ref(false);
+    const loading = ref(true);
+    const bottles = ref([]);
+    const editingId = ref(null);
+    const formError = ref("");
+    const formSuccess = ref("");
+    const form = ref({ name: "", age: "", strength: "" });
+
+    const token = localStorage.getItem("authToken");
+    const role = localStorage.getItem("userRole");
+
+    const authHeaders = () => ({
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    });
+
+    // Check auth
+    if (!token || role !== "admin") {
+      accessDenied.value = true;
+    } else {
+      isReady.value = true;
+      fetchBottles();
+    }
+
+    async function fetchBottles() {
+      loading.value = true;
+      try {
+        const res = await fetch(`${apiBase}/bottles`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.status === 401) {
+          accessDenied.value = true;
+          isReady.value = false;
+          return;
+        }
+        if (res.ok) {
+          bottles.value = await res.json();
+        }
+      } catch (e) {
+        formError.value = "Failed to load bottles";
+      } finally {
+        loading.value = false;
+      }
+    }
+
+    async function saveBottle() {
+      formError.value = "";
+      formSuccess.value = "";
+
+      const payload = {
+        name: form.value.name,
+        age: form.value.age,
+        strength: form.value.strength
+      };
+
+      try {
+        let res;
+        if (editingId.value) {
+          res = await fetch(`${apiBase}/bottles/${editingId.value}`, {
+            method: "PUT",
+            headers: authHeaders(),
+            body: JSON.stringify(payload)
+          });
+        } else {
+          res = await fetch(`${apiBase}/bottles`, {
+            method: "POST",
+            headers: authHeaders(),
+            body: JSON.stringify(payload)
+          });
+        }
+
+        if (res.status === 401) {
+          accessDenied.value = true;
+          isReady.value = false;
+          return;
+        }
+
+        if (res.ok) {
+          formSuccess.value = editingId.value ? "Bottle updated!" : "Bottle added!";
+          editingId.value = null;
+          form.value = { name: "", age: "", strength: "" };
+          await fetchBottles();
+        } else {
+          const data = await res.json();
+          formError.value = data.error || "Failed to save bottle";
+        }
+      } catch (e) {
+        formError.value = "Network error";
+      }
+    }
+
+    function startEdit(bottle) {
+      editingId.value = bottle.id;
+      form.value = {
+        name: bottle.name,
+        age: bottle.age === "Not stated" ? "" : bottle.age,
+        strength: bottle.strength === "N/A" ? "" : bottle.strength
+      };
+      formError.value = "";
+      formSuccess.value = "";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function cancelEdit() {
+      editingId.value = null;
+      form.value = { name: "", age: "", strength: "" };
+      formError.value = "";
+      formSuccess.value = "";
+    }
+
+    async function deleteBottle(bottle) {
+      if (!confirm(`Delete "${bottle.name}"?`)) return;
+
+      formError.value = "";
+      formSuccess.value = "";
+
+      try {
+        const res = await fetch(`${apiBase}/bottles/${bottle.id}`, {
+          method: "DELETE",
+          headers: authHeaders()
+        });
+
+        if (res.status === 401) {
+          accessDenied.value = true;
+          isReady.value = false;
+          return;
+        }
+
+        if (res.ok) {
+          formSuccess.value = "Bottle deleted!";
+          await fetchBottles();
+        } else {
+          const data = await res.json();
+          formError.value = data.error || "Failed to delete bottle";
+        }
+      } catch (e) {
+        formError.value = "Network error";
+      }
+    }
+
+    return {
+      isReady,
+      accessDenied,
+      loading,
+      bottles,
+      editingId,
+      form,
+      formError,
+      formSuccess,
+      saveBottle,
+      startEdit,
+      cancelEdit,
+      deleteBottle
+    };
+  }
+});
+
+app.mount("#app");

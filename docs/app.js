@@ -48,17 +48,15 @@ const app = createApp({
                 <thead>
                   <tr>
                     <th>Name</th>
-                    <th>Distillery</th>
                     <th>Age</th>
-                    <th>ABV</th>
+                    <th>Strength</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="bottle in bottles" :key="bottle.name">
+                  <tr v-for="bottle in bottles" :key="bottle.id">
                     <td><strong>{{ bottle.name }}</strong></td>
-                    <td>{{ bottle.distillery }}</td>
                     <td>{{ bottle.age }}</td>
-                    <td>{{ bottle.abv }}</td>
+                    <td>{{ bottle.strength }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -138,7 +136,7 @@ const app = createApp({
 
     // Go to Admin Panel
     const goToAdminPanel = () => {
-      alert("Admin Panel coming soon!");
+      window.location.href = "admin.html";
     };
 
     // Sign in with Google is now handled by Google's rendered button
