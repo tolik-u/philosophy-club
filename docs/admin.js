@@ -83,8 +83,8 @@ const app = createApp({
                   <input v-model="form.year_bottled" type="text" placeholder="e.g. 2023">
                 </label>
                 <label>
-                  Price
-                  <input v-model="form.price" type="text" placeholder="e.g. 13215">
+                  Price *
+                  <input v-model="form.price" type="number" placeholder="e.g. 13215" required>
                 </label>
               </div>
               <div class="admin-form-actions">
@@ -135,7 +135,7 @@ const app = createApp({
   `,
 
   setup() {
-    const apiBase = "https://philosophy-club.onrender.com";
+    const apiBase = location.hostname === "localhost" ? "http://localhost:8080" : "https://philosophy-club.onrender.com";
     const isReady = ref(false);
     const accessDenied = ref(false);
     const loading = ref(true);

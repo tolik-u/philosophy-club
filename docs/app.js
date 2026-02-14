@@ -82,7 +82,7 @@ const app = createApp({
     const countdownMinutes = ref(0);
     const countdownSeconds = ref(0);
     const googleClientId = ref("256483321761-a4hsvv36hbeslq1l3vjm0souh7988fir.apps.googleusercontent.com");
-    const apiBase = "https://philosophy-club.onrender.com";
+    const apiBase = location.hostname === "localhost" ? "http://localhost:8080" : "https://philosophy-club.onrender.com";
 
     // Calculate countdown to next Thursday 18:00
     const updateCountdown = () => {

@@ -618,14 +618,17 @@ input:focus, textarea:focus, select:focus {
   align-items: center;
 }
 
+.search-row input,
+.search-row button {
+  margin-bottom: 0 !important;
+}
+
 .search-input {
   flex: 1;
-  margin-bottom: 0;
 }
 
 .btn-search {
   white-space: nowrap;
-  margin-bottom: 0;
   padding: 0.5rem 1rem;
   width: auto;
   font-size: 0.85rem;

@@ -229,13 +229,21 @@ def create_bottle():
         if not name:
             return jsonify({"error": "Name is required"}), 400
 
+        raw_price = data.get("price", "")
+        if raw_price == "" or raw_price is None:
+            return jsonify({"error": "Price is required"}), 400
+        try:
+            price = float(raw_price)
+        except (ValueError, TypeError):
+            return jsonify({"error": "Price must be a number"}), 400
+
         bottle = {
             "name": name,
-            "age": data.get("age", "").strip(),
-            "strength": data.get("strength", "").strip(),
-            "bottle_size": data.get("bottle_size", "").strip(),
-            "year_bottled": data.get("year_bottled", "").strip(),
-            "price": data.get("price", "").strip(),
+            "age": str(data.get("age", "")).strip(),
+            "strength": str(data.get("strength", "")).strip(),
+            "bottle_size": str(data.get("bottle_size", "")).strip(),
+            "year_bottled": str(data.get("year_bottled", "")).strip(),
+            "price": price,
         }
 
         result = db["clubWhiskies"].insert_one(bottle)
@@ -256,9 +264,14 @@ def update_bottle(bottle_id):
         data = request.get_json()
         update_fields = {}
 
-        for field in ["name", "age", "strength", "bottle_size", "year_bottled", "price"]:
+        for field in ["name", "age", "strength", "bottle_size", "year_bottled"]:
             if field in data:
-                update_fields[field] = data[field].strip()
+                update_fields[field] = str(data[field]).strip()
+        if "price" in data:
+            try:
+                update_fields["price"] = float(data["price"])
+            except (ValueError, TypeError):
+                return jsonify({"error": "Price must be a number"}), 400
         if "name" in update_fields and not update_fields["name"]:
             return jsonify({"error": "Name cannot be empty"}), 400
 
