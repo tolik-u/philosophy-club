@@ -164,8 +164,11 @@ def get_bottles():
             bottles.append({
                 "id": str(bottle["_id"]),
                 "name": bottle.get("name", ""),
-                "age": bottle.get("age", "Not stated"),
-                "strength": bottle.get("strength", "N/A")
+                "age": bottle.get("age", ""),
+                "strength": bottle.get("strength", ""),
+                "bottle_size": bottle.get("bottle_size", ""),
+                "year_bottled": bottle.get("year_bottled", ""),
+                "price": bottle.get("price", "")
             })
 
         return jsonify(bottles), 200
@@ -182,17 +185,16 @@ def create_bottle():
     try:
         data = request.get_json()
         name = data.get("name", "").strip()
-        age = data.get("age", "").strip()
-        strength = data.get("strength", "").strip()
-
         if not name:
             return jsonify({"error": "Name is required"}), 400
 
         bottle = {
             "name": name,
-            "age": age or "Not stated",
-            "strength": strength or "N/A",
-            "created_at": datetime.utcnow().isoformat()
+            "age": data.get("age", "").strip(),
+            "strength": data.get("strength", "").strip(),
+            "bottle_size": data.get("bottle_size", "").strip(),
+            "year_bottled": data.get("year_bottled", "").strip(),
+            "price": data.get("price", "").strip(),
         }
 
         result = db["clubWhiskies"].insert_one(bottle)
@@ -213,15 +215,11 @@ def update_bottle(bottle_id):
         data = request.get_json()
         update_fields = {}
 
-        if "name" in data:
-            name = data["name"].strip()
-            if not name:
-                return jsonify({"error": "Name cannot be empty"}), 400
-            update_fields["name"] = name
-        if "age" in data:
-            update_fields["age"] = data["age"].strip() or "Not stated"
-        if "strength" in data:
-            update_fields["strength"] = data["strength"].strip() or "N/A"
+        for field in ["name", "age", "strength", "bottle_size", "year_bottled", "price"]:
+            if field in data:
+                update_fields[field] = data[field].strip()
+        if "name" in update_fields and not update_fields["name"]:
+            return jsonify({"error": "Name cannot be empty"}), 400
 
         if not update_fields:
             return jsonify({"error": "No fields to update"}), 400
@@ -238,8 +236,11 @@ def update_bottle(bottle_id):
         return jsonify({
             "id": str(updated["_id"]),
             "name": updated.get("name", ""),
-            "age": updated.get("age", "Not stated"),
-            "strength": updated.get("strength", "N/A")
+            "age": updated.get("age", ""),
+            "strength": updated.get("strength", ""),
+            "bottle_size": updated.get("bottle_size", ""),
+            "year_bottled": updated.get("year_bottled", ""),
+            "price": updated.get("price", "")
         }), 200
     except Exception as e:
         print(f"[!] Update bottle error: {e}")

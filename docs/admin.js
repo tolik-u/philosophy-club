@@ -31,7 +31,7 @@ const app = createApp({
               <div class="grid">
                 <label>
                   Name *
-                  <input v-model="form.name" type="text" placeholder="e.g. Lagavulin 16" required>
+                  <input v-model="form.name" type="text" placeholder="e.g. Laphroaig 2005 Single Cask" required>
                 </label>
                 <label>
                   Age
@@ -39,7 +39,21 @@ const app = createApp({
                 </label>
                 <label>
                   Strength
-                  <input v-model="form.strength" type="text" placeholder="e.g. 43%">
+                  <input v-model="form.strength" type="text" placeholder="e.g. 54.5 % Vol.">
+                </label>
+              </div>
+              <div class="grid">
+                <label>
+                  Bottle Size
+                  <input v-model="form.bottle_size" type="text" placeholder="e.g. 700 ml">
+                </label>
+                <label>
+                  Year Bottled
+                  <input v-model="form.year_bottled" type="text" placeholder="e.g. 2023">
+                </label>
+                <label>
+                  Price
+                  <input v-model="form.price" type="text" placeholder="e.g. 13215">
                 </label>
               </div>
               <div class="admin-form-actions">
@@ -62,6 +76,9 @@ const app = createApp({
                   <th>Name</th>
                   <th>Age</th>
                   <th>Strength</th>
+                  <th>Size</th>
+                  <th>Year</th>
+                  <th>Price</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -70,6 +87,9 @@ const app = createApp({
                   <td><strong>{{ bottle.name }}</strong></td>
                   <td>{{ bottle.age }}</td>
                   <td>{{ bottle.strength }}</td>
+                  <td>{{ bottle.bottle_size }}</td>
+                  <td>{{ bottle.year_bottled }}</td>
+                  <td>{{ bottle.price }}</td>
                   <td class="actions-cell">
                     <button class="btn-edit" @click="startEdit(bottle)">Edit</button>
                     <button class="btn-delete" @click="deleteBottle(bottle)">Delete</button>
@@ -92,7 +112,7 @@ const app = createApp({
     const editingId = ref(null);
     const formError = ref("");
     const formSuccess = ref("");
-    const form = ref({ name: "", age: "", strength: "" });
+    const form = ref({ name: "", age: "", strength: "", bottle_size: "", year_bottled: "", price: "" });
 
     const token = localStorage.getItem("authToken");
     const role = localStorage.getItem("userRole");
@@ -138,7 +158,10 @@ const app = createApp({
       const payload = {
         name: form.value.name,
         age: form.value.age,
-        strength: form.value.strength
+        strength: form.value.strength,
+        bottle_size: form.value.bottle_size,
+        year_bottled: form.value.year_bottled,
+        price: form.value.price
       };
 
       try {
@@ -166,7 +189,7 @@ const app = createApp({
         if (res.ok) {
           formSuccess.value = editingId.value ? "Bottle updated!" : "Bottle added!";
           editingId.value = null;
-          form.value = { name: "", age: "", strength: "" };
+          form.value = { name: "", age: "", strength: "", bottle_size: "", year_bottled: "", price: "" };
           await fetchBottles();
         } else {
           const data = await res.json();
@@ -181,8 +204,11 @@ const app = createApp({
       editingId.value = bottle.id;
       form.value = {
         name: bottle.name,
-        age: bottle.age === "Not stated" ? "" : bottle.age,
-        strength: bottle.strength === "N/A" ? "" : bottle.strength
+        age: bottle.age,
+        strength: bottle.strength,
+        bottle_size: bottle.bottle_size,
+        year_bottled: bottle.year_bottled,
+        price: bottle.price
       };
       formError.value = "";
       formSuccess.value = "";
@@ -191,7 +217,7 @@ const app = createApp({
 
     function cancelEdit() {
       editingId.value = null;
-      form.value = { name: "", age: "", strength: "" };
+      form.value = { name: "", age: "", strength: "", bottle_size: "", year_bottled: "", price: "" };
       formError.value = "";
       formSuccess.value = "";
     }

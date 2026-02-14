@@ -50,6 +50,8 @@ const app = createApp({
                     <th>Name</th>
                     <th>Age</th>
                     <th>Strength</th>
+                    <th>Size</th>
+                    <th>Year</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -57,6 +59,8 @@ const app = createApp({
                     <td><strong>{{ bottle.name }}</strong></td>
                     <td>{{ bottle.age }}</td>
                     <td>{{ bottle.strength }}</td>
+                    <td>{{ bottle.bottle_size }}</td>
+                    <td>{{ bottle.year_bottled }}</td>
                   </tr>
                 </tbody>
               </table>
