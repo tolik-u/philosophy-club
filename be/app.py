@@ -17,7 +17,7 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app, origins=["https://club.linux.yoga", "http://localhost:8000"])
-limiter = Limiter(get_remote_address, app=app, default_limits=["60 per minute"])
+limiter = Limiter(get_remote_address, app=app, default_limits=["60 per minute"], storage_uri="memory://")
 
 # MongoDB setup
 MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://127.0.0.1:27017")
