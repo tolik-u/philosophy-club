@@ -366,6 +366,35 @@ table td strong {
 
 /* ============= Admin Panel ============= */
 
+.admin-top-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-top-row > article {
+  margin-bottom: 0;
+}
+
+.grid-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1rem;
+}
+
+.admin-users-section {
+  padding: 1.5rem;
+}
+
+.admin-users-section h3 {
+  margin-top: 0;
+  font-size: 1.2rem;
+  color: var(--color-gold);
+  border-bottom: 2px solid rgba(212, 175, 55, 0.5);
+  padding-bottom: 0.5rem;
+}
+
 .admin-form-section {
   padding: 1.5rem;
 }
@@ -492,6 +521,10 @@ input:focus, textarea:focus, select:focus {
 /* ============= Responsive Design ============= */
 
 @media (max-width: 768px) {
+  .admin-top-row {
+    grid-template-columns: 1fr;
+  }
+
   main.container {
     padding: 1rem 0.5rem;
   }

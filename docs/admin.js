@@ -24,112 +24,115 @@ const app = createApp({
         </nav>
 
         <main class="container">
-          <!-- Add / Edit Bottle Form -->
-          <article class="admin-form-section">
-            <h3>{{ editingId ? 'Edit Bottle' : 'Add Bottle' }}</h3>
+          <!-- Top row: Form + Users side by side -->
+          <div class="admin-top-row">
+            <!-- Add / Edit Bottle Form -->
+            <article class="admin-form-section">
+              <h3>{{ editingId ? 'Edit Bottle' : 'Add Bottle' }}</h3>
 
-            <!-- Search from catalog -->
-            <div v-if="!editingId" class="search-wrapper">
-              <div class="search-row">
-                <input
-                  v-model="searchQuery"
-                  @keydown.enter.prevent="doSearch"
-                  type="text"
-                  placeholder="Search whisky catalog to pre-fill..."
-                  class="search-input"
-                >
-                <button type="button" @click="doSearch" class="btn-search">Search</button>
-              </div>
-              <div v-if="searchResults.length > 0" class="search-dropdown">
-                <div
-                  v-for="(result, idx) in searchResults"
-                  :key="idx"
-                  class="search-result"
-                  @click="selectResult(result)"
-                >
-                  <strong>{{ result.name }}</strong>
-                  <span class="search-result-details">
-                    {{ [result.age, result.strength, result.bottle_size].filter(Boolean).join(' · ') }}
-                  </span>
+              <!-- Search from catalog -->
+              <div v-if="!editingId" class="search-wrapper">
+                <div class="search-row">
+                  <input
+                    v-model="searchQuery"
+                    @keydown.enter.prevent="doSearch"
+                    type="text"
+                    placeholder="Search whisky catalog to pre-fill..."
+                    class="search-input"
+                  >
+                  <button type="button" @click="doSearch" class="btn-search">Search</button>
                 </div>
-                <div v-if="searchResults.length >= 10" class="search-hint">
-                  Showing top 10 — refine your search for more results
+                <div v-if="searchResults.length > 0" class="search-dropdown">
+                  <div
+                    v-for="(result, idx) in searchResults"
+                    :key="idx"
+                    class="search-result"
+                    @click="selectResult(result)"
+                  >
+                    <strong>{{ result.name }}</strong>
+                    <span class="search-result-details">
+                      {{ [result.age, result.strength, result.bottle_size].filter(Boolean).join(' · ') }}
+                    </span>
+                  </div>
+                  <div v-if="searchResults.length >= 10" class="search-hint">
+                    Showing top 10 — refine your search for more results
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <form @submit.prevent="saveBottle">
-              <div class="grid">
+              <form @submit.prevent="saveBottle">
                 <label>
                   Name *
                   <input v-model="form.name" type="text" placeholder="e.g. Laphroaig 2005 Single Cask" required>
                 </label>
-                <label>
-                  Age
-                  <input v-model="form.age" type="text" placeholder="e.g. 16 years">
-                </label>
-                <label>
-                  Strength
-                  <input v-model="form.strength" type="text" placeholder="e.g. 54.5 % Vol.">
-                </label>
-              </div>
-              <div class="grid">
-                <label>
-                  Bottle Size
-                  <input v-model="form.bottle_size" type="text" placeholder="e.g. 700 ml">
-                </label>
-                <label>
-                  Year Bottled
-                  <input v-model="form.year_bottled" type="text" placeholder="e.g. 2023">
-                </label>
+                <div class="grid-two">
+                  <label>
+                    Age
+                    <input v-model="form.age" type="text" placeholder="e.g. 16 years">
+                  </label>
+                  <label>
+                    Strength
+                    <input v-model="form.strength" type="text" placeholder="e.g. 54.5 % Vol.">
+                  </label>
+                </div>
+                <div class="grid-two">
+                  <label>
+                    Bottle Size
+                    <input v-model="form.bottle_size" type="text" placeholder="e.g. 700 ml">
+                  </label>
+                  <label>
+                    Year Bottled
+                    <input v-model="form.year_bottled" type="text" placeholder="e.g. 2023">
+                  </label>
+                </div>
                 <label>
                   Price *
                   <input v-model="form.price" type="number" placeholder="e.g. 13215" required>
                 </label>
-              </div>
-              <div class="admin-form-actions">
-                <button type="submit">{{ editingId ? 'Update' : 'Add Bottle' }}</button>
-                <button v-if="editingId" type="button" class="btn-cancel" @click="cancelEdit">Cancel</button>
-              </div>
-              <p v-if="formError" class="form-error">{{ formError }}</p>
-              <p v-if="formSuccess" class="form-success">{{ formSuccess }}</p>
-            </form>
-          </article>
+                <div class="admin-form-actions">
+                  <button type="submit">{{ editingId ? 'Update' : 'Add Bottle' }}</button>
+                  <button v-if="editingId" type="button" class="btn-cancel" @click="cancelEdit">Cancel</button>
+                </div>
+                <p v-if="formError" class="form-error">{{ formError }}</p>
+                <p v-if="formSuccess" class="form-success">{{ formSuccess }}</p>
+              </form>
+            </article>
 
-          <!-- Users Table -->
-          <article class="bottles-section">
-            <h3>Users ({{ users.length }})</h3>
-            <div v-if="users.length === 0">No users</div>
-            <table v-else>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="user in users" :key="user.email">
-                  <td>{{ user.name }}</td>
-                  <td>{{ user.email }}</td>
-                  <td><strong :style="{ color: user.role === 'admin' ? 'var(--color-gold)' : '#d0d0d0' }">{{ user.role }}</strong></td>
-                  <td>
-                    <button
-                      v-if="user.email !== currentEmail"
-                      :class="user.role === 'admin' ? 'btn-delete' : 'btn-edit'"
-                      @click="toggleRole(user)"
-                    >
-                      {{ user.role === 'admin' ? 'Demote' : 'Promote' }}
-                    </button>
-                    <span v-else style="color: #a0a0a0; font-size: 0.85rem;">You</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </article>
+            <!-- Users Table -->
+            <article class="admin-users-section">
+              <h3>Users ({{ users.length }})</h3>
+              <div v-if="users.length === 0">No users</div>
+              <table v-else>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="user in users" :key="user.email">
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td><strong :style="{ color: user.role === 'admin' ? 'var(--color-gold)' : '#d0d0d0' }">{{ user.role }}</strong></td>
+                    <td>
+                      <button
+                        v-if="user.email !== currentEmail"
+                        :class="user.role === 'admin' ? 'btn-delete' : 'btn-edit'"
+                        @click="toggleRole(user)"
+                      >
+                        {{ user.role === 'admin' ? 'Demote' : 'Promote' }}
+                      </button>
+                      <span v-else style="color: #a0a0a0; font-size: 0.85rem;">You</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </article>
+          </div>
 
-          <!-- Bottles Table -->
+          <!-- Bottles Table (full width) -->
           <article class="bottles-section">
             <h3>Bottles in Stock ({{ bottles.length }})</h3>
             <div v-if="loading">Loading...</div>
