@@ -13,7 +13,7 @@ A members-only web application for a gentlemen's social club centered around fin
 ```
 be/            Flask API (port 8080)
   app.py       Application and routes
-fe/            Static frontend (no build step)
+docs/          Static frontend (no build step, served via GitHub Pages)
   index.html   Entry point
   app.js       Vue application
   style.css    Custom styling
@@ -59,10 +59,10 @@ The API will be available at `http://127.0.0.1:8080`.
 
 ### Frontend
 
-Serve the `fe/` directory with any static file server, for example:
+Serve the `docs/` directory with any static file server, for example:
 
 ```bash
-cd fe
+cd docs
 python -m http.server 8000
 ```
 
