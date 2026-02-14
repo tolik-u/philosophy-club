@@ -139,6 +139,7 @@ def login():
 
 @app.route("/users", methods=["GET"])
 @require_auth
+@require_admin
 def list_users():
     """List all users"""
     try:
@@ -148,6 +149,33 @@ def list_users():
     except Exception as e:
         print(f"[!] List users error: {e}")
         return jsonify({"error": "Failed to list users"}), 500
+
+@app.route("/users/<path:email>/role", methods=["PUT"])
+@require_auth
+@require_admin
+@limiter.limit("10 per minute")
+def update_user_role(email):
+    """Promote or demote a user (admin only, cannot change own role)"""
+    try:
+        if email == request.user_email:
+            return jsonify({"error": "Cannot change your own role"}), 400
+
+        data = request.get_json()
+        new_role = data.get("role")
+        if new_role not in ("admin", "user"):
+            return jsonify({"error": "Role must be 'admin' or 'user'"}), 400
+
+        result = db["users"].update_one(
+            {"email": email},
+            {"$set": {"role": new_role}}
+        )
+        if result.matched_count == 0:
+            return jsonify({"error": "User not found"}), 404
+
+        return jsonify({"email": email, "role": new_role}), 200
+    except Exception as e:
+        print(f"[!] Update user role error: {e}")
+        return jsonify({"error": "Failed to update role"}), 500
 
 # ============= Bottles Management Endpoints =============
 

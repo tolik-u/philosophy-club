@@ -16,7 +16,11 @@ be/            Flask API (port 8080)
 docs/          Static frontend (no build step, served via GitHub Pages)
   index.html   Entry point
   app.js       Vue application
+  admin.html   Admin panel page
+  admin.js     Admin panel logic
   style.css    Custom styling
+run-local.sh   Local dev script (Linux/macOS)
+run-local.bat  Local dev script (Windows)
 ```
 
 ## Features
@@ -25,6 +29,9 @@ docs/          Static frontend (no build step, served via GitHub Pages)
 - First registered user is automatically granted admin role
 - Whisky bottle inventory pulled from MongoDB
 - Live countdown timer to next Thursday 18:00 gathering
+- Admin panel with bottle CRUD management
+- Whisky catalog search (Atlas Search) to pre-fill new bottles
+- User management with promote/demote controls
 
 ## Getting Started
 
@@ -34,7 +41,23 @@ docs/          Static frontend (no build step, served via GitHub Pages)
 - MongoDB (local or remote)
 - A Google OAuth 2.0 Client ID
 
-### Backend
+### Quick Start
+
+Run both backend and frontend with one command:
+
+```bash
+# Linux / macOS
+./run-local.sh
+
+# Windows
+run-local.bat
+```
+
+This starts the backend on `http://localhost:8080` and serves the frontend on `http://localhost:8000`. The frontend auto-detects localhost and points API calls to the local backend.
+
+### Manual Setup
+
+**Backend:**
 
 ```bash
 cd be
@@ -57,7 +80,7 @@ python app.py
 
 The API will be available at `http://127.0.0.1:8080`.
 
-### Frontend
+**Frontend:**
 
 Serve the `docs/` directory with any static file server, for example:
 
@@ -70,12 +93,17 @@ Then open `http://localhost:8000` in your browser.
 
 ## API Endpoints
 
-| Method | Path      | Description          |
-|--------|-----------|----------------------|
-| POST   | /login    | Google token login   |
-| GET    | /users    | List all members     |
-| GET    | /bottles  | List whisky inventory|
-| GET    | /health   | Health check         |
+| Method | Path                  | Auth  | Description                    |
+|--------|-----------------------|-------|--------------------------------|
+| POST   | /login                |       | Google token login             |
+| GET    | /users                | admin | List all members               |
+| PUT    | /users/:email/role    | admin | Promote/demote user            |
+| GET    | /bottles              | user  | List whisky inventory          |
+| POST   | /bottles              | admin | Add a bottle                   |
+| PUT    | /bottles/:id          | admin | Update a bottle                |
+| DELETE | /bottles/:id          | admin | Delete a bottle                |
+| GET    | /whiskies/search?q=   | admin | Search whisky catalog          |
+| GET    | /health               |       | Health check                   |
 
 ## License
 

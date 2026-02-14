@@ -96,6 +96,39 @@ const app = createApp({
             </form>
           </article>
 
+          <!-- Users Table -->
+          <article class="bottles-section">
+            <h3>Users ({{ users.length }})</h3>
+            <div v-if="users.length === 0">No users</div>
+            <table v-else>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="user in users" :key="user.email">
+                  <td>{{ user.name }}</td>
+                  <td>{{ user.email }}</td>
+                  <td><strong :style="{ color: user.role === 'admin' ? 'var(--color-gold)' : '#d0d0d0' }">{{ user.role }}</strong></td>
+                  <td>
+                    <button
+                      v-if="user.email !== currentEmail"
+                      :class="user.role === 'admin' ? 'btn-delete' : 'btn-edit'"
+                      @click="toggleRole(user)"
+                    >
+                      {{ user.role === 'admin' ? 'Demote' : 'Promote' }}
+                    </button>
+                    <span v-else style="color: #a0a0a0; font-size: 0.85rem;">You</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </article>
+
           <!-- Bottles Table -->
           <article class="bottles-section">
             <h3>Bottles in Stock ({{ bottles.length }})</h3>
@@ -146,9 +179,11 @@ const app = createApp({
     const form = ref({ name: "", age: "", strength: "", bottle_size: "", year_bottled: "", price: "" });
     const searchQuery = ref("");
     const searchResults = ref([]);
+    const users = ref([]);
 
     const token = localStorage.getItem("authToken");
     const role = localStorage.getItem("userRole");
+    const currentEmail = localStorage.getItem("userEmail");
 
     const authHeaders = () => ({
       "Authorization": `Bearer ${token}`,
@@ -161,6 +196,42 @@ const app = createApp({
     } else {
       isReady.value = true;
       fetchBottles();
+      fetchUsers();
+    }
+
+    async function fetchUsers() {
+      try {
+        const res = await fetch(`${apiBase}/users`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          users.value = await res.json();
+        }
+      } catch (e) {
+        // silent
+      }
+    }
+
+    async function toggleRole(user) {
+      const newRole = user.role === "admin" ? "user" : "admin";
+      const action = newRole === "admin" ? "Promote" : "Demote";
+      if (!confirm(`${action} "${user.name || user.email}" to ${newRole}?`)) return;
+
+      try {
+        const res = await fetch(`${apiBase}/users/${encodeURIComponent(user.email)}/role`, {
+          method: "PUT",
+          headers: authHeaders(),
+          body: JSON.stringify({ role: newRole })
+        });
+        if (res.ok) {
+          await fetchUsers();
+        } else {
+          const data = await res.json();
+          alert(data.error || "Failed to update role");
+        }
+      } catch (e) {
+        alert("Network error");
+      }
     }
 
     async function fetchBottles() {
@@ -329,6 +400,9 @@ const app = createApp({
       searchResults,
       doSearch,
       selectResult,
+      users,
+      currentEmail,
+      toggleRole,
       saveBottle,
       startEdit,
       cancelEdit,
