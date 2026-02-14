@@ -191,6 +191,7 @@ def server_error(e):
 # ============= Main =============
 
 if __name__ == "__main__":
-    print("[*] Binding to 127.0.0.1:8080...")
-    print("[✓] Backend ready! Visit http://127.0.0.1:8080/health\n")
-    app.run(host="127.0.0.1", port=8080, debug=False)
+    port = int(os.getenv("PORT", 8080))
+    print(f"[*] Binding to 0.0.0.0:{port}...")
+    print(f"[✓] Backend ready! Visit http://127.0.0.1:{port}/health\n")
+    app.run(host="0.0.0.0", port=port, debug=False)
