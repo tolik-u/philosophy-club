@@ -615,7 +615,7 @@ input:focus, textarea:focus, select:focus {
 .search-row {
   display: flex;
   gap: 0.5rem;
-  align-items: stretch;
+  align-items: center;
 }
 
 .search-input {
@@ -626,6 +626,9 @@ input:focus, textarea:focus, select:focus {
 .btn-search {
   white-space: nowrap;
   margin-bottom: 0;
+  padding: 0.5rem 1rem;
+  width: auto;
+  font-size: 0.85rem;
 }
 
 .search-dropdown {
