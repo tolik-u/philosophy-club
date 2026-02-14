@@ -13,7 +13,7 @@ from google.auth.transport import requests as google_requests
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["https://club.linux.yoga", "http://localhost:8000"])
 
 # MongoDB setup
 MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://127.0.0.1:27017")
