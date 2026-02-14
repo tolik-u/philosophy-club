@@ -151,6 +151,47 @@ def list_users():
 
 # ============= Bottles Management Endpoints =============
 
+@app.route("/whiskies/search", methods=["GET"])
+@require_auth
+@require_admin
+@limiter.limit("60 per minute")
+def search_whiskies():
+    """Search the whiskies catalog using Atlas Search (admin only)"""
+    try:
+        q = request.args.get("q", "").strip()
+        if len(q) < 2:
+            return jsonify([]), 200
+
+        pipeline = [
+            {
+                "$search": {
+                    "index": "whiskies",
+                    "text": {
+                        "query": q,
+                        "path": "name",
+                        "fuzzy": {"maxEdits": 1}
+                    }
+                }
+            },
+            {"$limit": 10},
+            {
+                "$project": {
+                    "_id": 0,
+                    "name": 1,
+                    "age": 1,
+                    "strength": 1,
+                    "bottle_size": 1,
+                    "year_bottled": 1
+                }
+            }
+        ]
+
+        results = list(db["whiskies"].aggregate(pipeline))
+        return jsonify(results), 200
+    except Exception as e:
+        print(f"[!] Search whiskies error: {e}")
+        return jsonify({"error": "Search failed"}), 500
+
 @app.route("/bottles", methods=["GET"])
 @require_auth
 def get_bottles():

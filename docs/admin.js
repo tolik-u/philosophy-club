@@ -27,6 +27,31 @@ const app = createApp({
           <!-- Add / Edit Bottle Form -->
           <article class="admin-form-section">
             <h3>{{ editingId ? 'Edit Bottle' : 'Add Bottle' }}</h3>
+
+            <!-- Search from catalog -->
+            <div v-if="!editingId" class="search-wrapper">
+              <input
+                v-model="searchQuery"
+                @input="onSearchInput"
+                type="text"
+                placeholder="Search whisky catalog to pre-fill..."
+                class="search-input"
+              >
+              <div v-if="searchResults.length > 0" class="search-dropdown">
+                <div
+                  v-for="(result, idx) in searchResults"
+                  :key="idx"
+                  class="search-result"
+                  @click="selectResult(result)"
+                >
+                  <strong>{{ result.name }}</strong>
+                  <span class="search-result-details">
+                    {{ [result.age, result.strength, result.bottle_size].filter(Boolean).join(' · ') }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             <form @submit.prevent="saveBottle">
               <div class="grid">
                 <label>
@@ -113,6 +138,9 @@ const app = createApp({
     const formError = ref("");
     const formSuccess = ref("");
     const form = ref({ name: "", age: "", strength: "", bottle_size: "", year_bottled: "", price: "" });
+    const searchQuery = ref("");
+    const searchResults = ref([]);
+    let searchTimer = null;
 
     const token = localStorage.getItem("authToken");
     const role = localStorage.getItem("userRole");
@@ -252,6 +280,40 @@ const app = createApp({
       }
     }
 
+    function onSearchInput() {
+      clearTimeout(searchTimer);
+      const q = searchQuery.value.trim();
+      if (q.length < 2) {
+        searchResults.value = [];
+        return;
+      }
+      searchTimer = setTimeout(async () => {
+        try {
+          const res = await fetch(`${apiBase}/whiskies/search?q=${encodeURIComponent(q)}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          if (res.ok) {
+            searchResults.value = await res.json();
+          }
+        } catch (e) {
+          searchResults.value = [];
+        }
+      }, 300);
+    }
+
+    function selectResult(result) {
+      form.value = {
+        name: result.name || "",
+        age: result.age || "",
+        strength: result.strength || "",
+        bottle_size: result.bottle_size || "",
+        year_bottled: result.year_bottled || "",
+        price: ""
+      };
+      searchQuery.value = "";
+      searchResults.value = [];
+    }
+
     return {
       isReady,
       accessDenied,
@@ -261,6 +323,10 @@ const app = createApp({
       form,
       formError,
       formSuccess,
+      searchQuery,
+      searchResults,
+      onSearchInput,
+      selectResult,
       saveBottle,
       startEdit,
       cancelEdit,
