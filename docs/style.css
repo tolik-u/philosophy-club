@@ -748,3 +748,374 @@ input:focus, textarea:focus, select:focus {
   text-align: center;
   border-top: 1px solid rgba(212, 175, 55, 0.15);
 }
+
+/* ============= Tab Bar ============= */
+
+.tab-bar {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid rgba(212, 175, 55, 0.2);
+}
+
+.tab-btn {
+  background: transparent !important;
+  color: #a0a0a0 !important;
+  border: none !important;
+  border-bottom: 3px solid transparent !important;
+  padding: 0.75rem 1.5rem !important;
+  font-size: 1rem !important;
+  font-family: 'Georgia', serif !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: -2px;
+  border-radius: 0 !important;
+}
+
+.tab-btn:hover {
+  color: #d0d0d0 !important;
+  background: rgba(212, 175, 55, 0.05) !important;
+}
+
+.tab-btn.active {
+  color: var(--color-gold) !important;
+  border-bottom-color: var(--color-gold) !important;
+  font-weight: 600;
+}
+
+/* ============= Stars Display ============= */
+
+.stars-display {
+  color: var(--color-gold);
+  font-size: 1rem;
+  letter-spacing: 1px;
+}
+
+.stars-lg {
+  font-size: 1.4rem;
+}
+
+.rating-num {
+  color: #d0d0d0;
+  font-size: 0.85rem;
+  margin-left: 0.4rem;
+}
+
+.rating-num-lg {
+  color: #e0e0e0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.review-count-label {
+  color: #a0a0a0;
+  font-size: 0.9rem;
+  margin-left: 0.4rem;
+}
+
+/* ============= View & Review Button ============= */
+
+.btn-view {
+  background: transparent !important;
+  color: var(--color-gold) !important;
+  border: 1px solid var(--color-gold) !important;
+  padding: 0.3rem 0.8rem !important;
+  font-size: 0.85rem !important;
+  margin: 0 !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-view:hover {
+  background: var(--color-gold) !important;
+  color: var(--color-navy) !important;
+}
+
+/* ============= Bottle Detail View ============= */
+
+.bottle-detail {
+  padding: 1.5rem;
+}
+
+.bottle-detail h3 {
+  margin-top: 0.5rem;
+  font-size: 1.4rem;
+  color: var(--color-gold);
+  border-bottom: 2px solid rgba(212, 175, 55, 0.5);
+  padding-bottom: 0.5rem;
+}
+
+.btn-back-link {
+  background: transparent !important;
+  color: #a0a0a0 !important;
+  border: none !important;
+  padding: 0 !important;
+  font-size: 0.9rem !important;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+
+.btn-back-link:hover {
+  color: var(--color-gold) !important;
+}
+
+.bottle-info-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+  margin-bottom: 1rem;
+  color: #d0d0d0;
+  font-size: 0.95rem;
+}
+
+.info-label {
+  color: #a0a0a0;
+  font-size: 0.85rem;
+}
+
+.bottle-rating-summary {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+/* ============= Star Rating Input ============= */
+
+.star-rating-input {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.star-clickable {
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: #555;
+  transition: color 0.15s ease, transform 0.15s ease;
+  user-select: none;
+}
+
+.star-clickable:hover {
+  transform: scale(1.15);
+}
+
+.star-clickable.filled {
+  color: var(--color-gold);
+}
+
+/* ============= Review Form ============= */
+
+.review-form-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: rgba(26, 42, 58, 0.3);
+  border-radius: 6px;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.review-form-section h4 {
+  color: var(--color-gold);
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+.review-form-section textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.review-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.review-form-actions button {
+  width: auto;
+}
+
+/* ============= Review Cards ============= */
+
+.reviews-list {
+  margin-top: 1rem;
+}
+
+.reviews-list h4 {
+  color: var(--color-gold);
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+.no-reviews {
+  color: #a0a0a0;
+  font-style: italic;
+}
+
+.review-card {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 6px;
+  background: rgba(51, 51, 51, 0.4);
+}
+
+.review-card.own-review {
+  border-color: var(--color-gold);
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.review-header strong {
+  color: #e0e0e0;
+  font-size: 0.95rem;
+}
+
+.review-note {
+  color: #c0c0c0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0.3rem 0;
+}
+
+.review-date {
+  color: #808080;
+  font-size: 0.8rem;
+  margin-top: 0.3rem;
+}
+
+/* ============= Favourites Section ============= */
+
+.favourites-section h3 {
+  margin-top: 0;
+}
+
+/* ============= Admin Status Badge ============= */
+
+.status-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.status-stock {
+  background: rgba(40, 167, 69, 0.15);
+  color: #28a745;
+  border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.status-tasted {
+  background: rgba(212, 175, 55, 0.15);
+  color: var(--color-gold);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+/* ============= Admin Action Buttons ============= */
+
+.btn-mark-tasted {
+  background: linear-gradient(135deg, var(--color-gold) 0%, #c9a227 100%) !important;
+  color: var(--color-navy) !important;
+  border: none !important;
+  padding: 0.3rem 0.8rem !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.btn-mark-tasted:hover {
+  background: linear-gradient(135deg, #e6c547 0%, #d4af37 100%) !important;
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+}
+
+.btn-restore {
+  background: transparent !important;
+  color: #28a745 !important;
+  border: 1px solid #28a745 !important;
+  padding: 0.3rem 0.8rem !important;
+  font-size: 0.85rem !important;
+  margin: 0 !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-restore:hover {
+  background: #28a745 !important;
+  color: #fff !important;
+}
+
+.btn-delete-subtle {
+  background: transparent !important;
+  color: #808080 !important;
+  border: none !important;
+  padding: 0.2rem 0.5rem !important;
+  font-size: 1.2rem !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  min-width: auto !important;
+}
+
+.btn-delete-subtle:hover {
+  color: #dc3545 !important;
+}
+
+/* ============= Responsive: Tabs & Detail ============= */
+
+@media (max-width: 768px) {
+  .tab-bar {
+    overflow-x: auto;
+  }
+
+  .tab-btn {
+    padding: 0.6rem 1rem !important;
+    font-size: 0.9rem !important;
+    white-space: nowrap;
+  }
+
+  .bottle-detail {
+    padding: 1rem;
+  }
+
+  .bottle-info-grid {
+    gap: 0.5rem 1rem;
+  }
+
+  .star-clickable {
+    font-size: 1.5rem;
+  }
+
+  .review-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .tab-btn {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.85rem !important;
+  }
+
+  .actions-cell {
+    flex-wrap: wrap;
+  }
+}

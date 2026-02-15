@@ -8,6 +8,7 @@ resource "aws_apigatewayv2_api" "http" {
     allow_headers = ["Authorization", "Content-Type"]
     allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
   }
+
 }
 
 # Lambda integration

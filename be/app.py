@@ -81,10 +81,11 @@ def require_auth(f):
         if not auth_header.startswith("Bearer "):
             return jsonify({"error": "Missing or invalid Authorization header"}), 401
         token = auth_header.split(" ", 1)[1]
-        email, _ = verify_google_token(token)
+        email, name = verify_google_token(token)
         if not email:
             return jsonify({"error": "Invalid or expired token"}), 401
         request.user_email = email
+        request.user_name = name or email
         return f(*args, **kwargs)
     return decorated
 
@@ -260,14 +261,24 @@ def get_bottles():
 
         bottles = []
         for bottle in bottles_cursor:
+            bottle_id = bottle["_id"]
+            # Aggregate reviews for this bottle
+            reviews = list(db["reviews"].find({"bottle_id": str(bottle_id)}))
+            review_count = len(reviews)
+            avg_rating = round(sum(r["rating"] for r in reviews) / review_count, 1) if review_count > 0 else 0
+
             bottles.append({
-                "id": str(bottle["_id"]),
+                "id": str(bottle_id),
                 "name": bottle.get("name", ""),
                 "age": bottle.get("age", ""),
                 "strength": bottle.get("strength", ""),
                 "bottle_size": bottle.get("bottle_size", ""),
                 "year_bottled": bottle.get("year_bottled", ""),
-                "price": bottle.get("price", "")
+                "price": bottle.get("price", ""),
+                "status": bottle.get("status", "stock"),
+                "catalog_name": bottle.get("catalog_name", ""),
+                "avg_rating": avg_rating,
+                "review_count": review_count
             })
 
         return jsonify(bottles), 200
@@ -294,6 +305,8 @@ def create_bottle():
         except (ValueError, TypeError):
             return jsonify({"error": "Price must be a number"}), 400
 
+        catalog_name = str(data.get("catalog_name", "")).strip()
+
         bottle = {
             "name": name,
             "age": str(data.get("age", "")).strip(),
@@ -301,6 +314,8 @@ def create_bottle():
             "bottle_size": str(data.get("bottle_size", "")).strip(),
             "year_bottled": str(data.get("year_bottled", "")).strip(),
             "price": price,
+            "status": "stock",
+            "catalog_name": catalog_name,
         }
 
         result = db["clubWhiskies"].insert_one(bottle)
@@ -350,7 +365,9 @@ def update_bottle(bottle_id):
             "strength": updated.get("strength", ""),
             "bottle_size": updated.get("bottle_size", ""),
             "year_bottled": updated.get("year_bottled", ""),
-            "price": updated.get("price", "")
+            "price": updated.get("price", ""),
+            "status": updated.get("status", "stock"),
+            "catalog_name": updated.get("catalog_name", "")
         }), 200
     except Exception as e:
         print(f"[!] Update bottle error: {e}")
@@ -369,6 +386,134 @@ def delete_bottle(bottle_id):
     except Exception as e:
         print(f"[!] Delete bottle error: {e}")
         return jsonify({"error": "Failed to delete bottle"}), 500
+
+# ============= Bottle Status Endpoints =============
+
+@app.route("/bottles/<bottle_id>/status", methods=["PUT"])
+@require_auth
+@require_admin
+def update_bottle_status(bottle_id):
+    """Set bottle status to stock or tasted (admin only)"""
+    try:
+        data = request.get_json()
+        status = data.get("status")
+        if status not in ("stock", "tasted"):
+            return jsonify({"error": "Status must be 'stock' or 'tasted'"}), 400
+
+        result = db["clubWhiskies"].update_one(
+            {"_id": ObjectId(bottle_id)},
+            {"$set": {"status": status}}
+        )
+
+        if result.matched_count == 0:
+            return jsonify({"error": "Bottle not found"}), 404
+
+        return jsonify({"id": bottle_id, "status": status}), 200
+    except Exception as e:
+        print(f"[!] Update bottle status error: {e}")
+        return jsonify({"error": "Failed to update status"}), 500
+
+# ============= Reviews Endpoints =============
+
+@app.route("/bottles/<bottle_id>/reviews", methods=["GET"])
+@require_auth
+def get_reviews(bottle_id):
+    """Get all reviews for a bottle"""
+    try:
+        reviews = list(db["reviews"].find({"bottle_id": bottle_id}).sort("created_at", -1))
+        result = []
+        for r in reviews:
+            result.append({
+                "id": str(r["_id"]),
+                "bottle_id": r["bottle_id"],
+                "email": r["email"],
+                "name": r.get("name", ""),
+                "rating": r["rating"],
+                "note": r.get("note", ""),
+                "created_at": r.get("created_at", "")
+            })
+        return jsonify(result), 200
+    except Exception as e:
+        print(f"[!] Get reviews error: {e}")
+        return jsonify({"error": "Failed to fetch reviews"}), 500
+
+@app.route("/bottles/<bottle_id>/reviews", methods=["POST"])
+@require_auth
+def upsert_review(bottle_id):
+    """Upsert a review for the current user on a bottle"""
+    try:
+        # Verify bottle exists
+        bottle = db["clubWhiskies"].find_one({"_id": ObjectId(bottle_id)})
+        if not bottle:
+            return jsonify({"error": "Bottle not found"}), 404
+
+        data = request.get_json()
+        rating = data.get("rating")
+        if not isinstance(rating, (int, float)) or rating < 1 or rating > 5:
+            return jsonify({"error": "Rating must be between 1 and 5"}), 400
+
+        note = str(data.get("note", "")).strip()
+
+        # Upsert: one review per user per bottle
+        db["reviews"].update_one(
+            {"bottle_id": bottle_id, "email": request.user_email},
+            {"$set": {
+                "bottle_id": bottle_id,
+                "email": request.user_email,
+                "name": request.user_name,
+                "rating": int(rating),
+                "note": note,
+                "created_at": datetime.utcnow().isoformat()
+            }},
+            upsert=True
+        )
+
+        # Recalculate avg rating for this bottle
+        reviews = list(db["reviews"].find({"bottle_id": bottle_id}))
+        review_count = len(reviews)
+        avg_rating = round(sum(r["rating"] for r in reviews) / review_count, 1) if review_count > 0 else 0
+
+        # Update matching whiskies catalog entry if catalog_name is set
+        catalog_name = bottle.get("catalog_name", "")
+        if catalog_name:
+            db["whiskies"].update_many(
+                {"name": catalog_name},
+                {"$set": {"club_avg_rating": avg_rating, "club_review_count": review_count}}
+            )
+
+        return jsonify({"avg_rating": avg_rating, "review_count": review_count}), 200
+    except Exception as e:
+        print(f"[!] Upsert review error: {e}")
+        return jsonify({"error": "Failed to save review"}), 500
+
+# ============= Favourites Endpoint =============
+
+@app.route("/favourites", methods=["GET"])
+@require_auth
+def get_favourites():
+    """Get top-rated whiskies from the catalog that have club reviews"""
+    try:
+        results = list(
+            db["whiskies"]
+            .find({"club_review_count": {"$gt": 0}})
+            .sort("club_avg_rating", -1)
+            .limit(20)
+        )
+
+        favourites = []
+        for w in results:
+            favourites.append({
+                "name": w.get("name", ""),
+                "age": w.get("age", ""),
+                "strength": w.get("strength", ""),
+                "club_avg_rating": w.get("club_avg_rating", 0),
+                "club_review_count": w.get("club_review_count", 0)
+            })
+
+        return jsonify(favourites), 200
+    except Exception as e:
+        print(f"[!] Get favourites error: {e}")
+        return jsonify({"error": "Failed to fetch favourites"}), 500
 
 # ============= Health Check =============
 

@@ -24,8 +24,14 @@ const app = createApp({
         </nav>
 
         <main class="container">
-          <!-- Top row: Form + Users side by side -->
-          <div class="admin-top-row">
+          <!-- Tab Bar -->
+          <div class="tab-bar">
+            <button :class="['tab-btn', { active: adminTab === 'whiskies' }]" @click="adminTab = 'whiskies'">Whisky Management</button>
+            <button :class="['tab-btn', { active: adminTab === 'users' }]" @click="adminTab = 'users'">User Management</button>
+          </div>
+
+          <!-- Whisky Management Tab -->
+          <template v-if="adminTab === 'whiskies'">
             <!-- Add / Edit Bottle Form -->
             <article class="admin-form-section">
               <h3>{{ editingId ? 'Edit Bottle' : 'Add Bottle' }}</h3>
@@ -98,7 +104,59 @@ const app = createApp({
               </form>
             </article>
 
-            <!-- Users Table -->
+            <!-- Bottles Table -->
+            <article class="bottles-section">
+              <h3>All Bottles ({{ bottles.length }})</h3>
+              <div v-if="loading">Loading...</div>
+              <div v-else-if="bottles.length === 0">No bottles</div>
+              <table v-else>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>Strength</th>
+                    <th>Size</th>
+                    <th>Year</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="bottle in bottles" :key="bottle.id">
+                    <td><strong>{{ bottle.name }}</strong></td>
+                    <td>{{ bottle.age }}</td>
+                    <td>{{ bottle.strength }}</td>
+                    <td>{{ bottle.bottle_size }}</td>
+                    <td>{{ bottle.year_bottled }}</td>
+                    <td>{{ bottle.price }}</td>
+                    <td>
+                      <span :class="['status-badge', bottle.status === 'tasted' ? 'status-tasted' : 'status-stock']">
+                        {{ (bottle.status || 'stock') === 'stock' ? 'In Stock' : 'Tasted' }}
+                      </span>
+                    </td>
+                    <td class="actions-cell">
+                      <button class="btn-edit" @click="startEdit(bottle)">Edit</button>
+                      <button
+                        v-if="(bottle.status || 'stock') === 'stock'"
+                        class="btn-mark-tasted"
+                        @click="markTasted(bottle)"
+                      >Mark as Tasted</button>
+                      <button
+                        v-else
+                        class="btn-restore"
+                        @click="restoreToStock(bottle)"
+                      >Restore to Stock</button>
+                      <button class="btn-delete-subtle" @click="deleteBottle(bottle)" title="Delete bottle">&times;</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </article>
+          </template>
+
+          <!-- User Management Tab -->
+          <template v-if="adminTab === 'users'">
             <article class="admin-users-section">
               <h3>Users ({{ users.length }})</h3>
               <div v-if="users.length === 0">No users</div>
@@ -130,41 +188,7 @@ const app = createApp({
                 </tbody>
               </table>
             </article>
-          </div>
-
-          <!-- Bottles Table (full width) -->
-          <article class="bottles-section">
-            <h3>Bottles in Stock ({{ bottles.length }})</h3>
-            <div v-if="loading">Loading...</div>
-            <div v-else-if="bottles.length === 0">No bottles in stock</div>
-            <table v-else>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Age</th>
-                  <th>Strength</th>
-                  <th>Size</th>
-                  <th>Year</th>
-                  <th>Price</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="bottle in bottles" :key="bottle.id">
-                  <td><strong>{{ bottle.name }}</strong></td>
-                  <td>{{ bottle.age }}</td>
-                  <td>{{ bottle.strength }}</td>
-                  <td>{{ bottle.bottle_size }}</td>
-                  <td>{{ bottle.year_bottled }}</td>
-                  <td>{{ bottle.price }}</td>
-                  <td class="actions-cell">
-                    <button class="btn-edit" @click="startEdit(bottle)">Edit</button>
-                    <button class="btn-delete" @click="deleteBottle(bottle)">Delete</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </article>
+          </template>
         </main>
       </div>
     </div>
@@ -174,12 +198,13 @@ const app = createApp({
     const apiBase = location.hostname === "localhost" ? "http://localhost:8080" : "https://b0spsb1dub.execute-api.eu-west-1.amazonaws.com";
     const isReady = ref(false);
     const accessDenied = ref(false);
+    const adminTab = ref("whiskies");
     const loading = ref(true);
     const bottles = ref([]);
     const editingId = ref(null);
     const formError = ref("");
     const formSuccess = ref("");
-    const form = ref({ name: "", age: "", strength: "", bottle_size: "", year_bottled: "", price: "" });
+    const form = ref({ name: "", age: "", strength: "", bottle_size: "", year_bottled: "", price: "", catalog_name: "" });
     const searchQuery = ref("");
     const searchResults = ref([]);
     const users = ref([]);
@@ -271,6 +296,11 @@ const app = createApp({
         price: form.value.price
       };
 
+      // Include catalog_name only when creating (not editing)
+      if (!editingId.value && form.value.catalog_name) {
+        payload.catalog_name = form.value.catalog_name;
+      }
+
       try {
         let res;
         if (editingId.value) {
@@ -296,7 +326,7 @@ const app = createApp({
         if (res.ok) {
           formSuccess.value = editingId.value ? "Bottle updated!" : "Bottle added!";
           editingId.value = null;
-          form.value = { name: "", age: "", strength: "", bottle_size: "", year_bottled: "", price: "" };
+          form.value = { name: "", age: "", strength: "", bottle_size: "", year_bottled: "", price: "", catalog_name: "" };
           await fetchBottles();
         } else {
           const data = await res.json();
@@ -315,7 +345,8 @@ const app = createApp({
         strength: bottle.strength,
         bottle_size: bottle.bottle_size,
         year_bottled: bottle.year_bottled,
-        price: bottle.price
+        price: bottle.price,
+        catalog_name: bottle.catalog_name || ""
       };
       formError.value = "";
       formSuccess.value = "";
@@ -324,13 +355,53 @@ const app = createApp({
 
     function cancelEdit() {
       editingId.value = null;
-      form.value = { name: "", age: "", strength: "", bottle_size: "", year_bottled: "", price: "" };
+      form.value = { name: "", age: "", strength: "", bottle_size: "", year_bottled: "", price: "", catalog_name: "" };
       formError.value = "";
       formSuccess.value = "";
     }
 
+    async function markTasted(bottle) {
+      if (!confirm(`Mark "${bottle.name}" as tasted?`)) return;
+      try {
+        const res = await fetch(`${apiBase}/bottles/${bottle.id}/status`, {
+          method: "PUT",
+          headers: authHeaders(),
+          body: JSON.stringify({ status: "tasted" })
+        });
+        if (res.ok) {
+          formSuccess.value = "Bottle moved to tasting archive!";
+          await fetchBottles();
+        } else {
+          const data = await res.json();
+          formError.value = data.error || "Failed to update status";
+        }
+      } catch (e) {
+        formError.value = "Network error";
+      }
+    }
+
+    async function restoreToStock(bottle) {
+      if (!confirm(`Restore "${bottle.name}" to stock?`)) return;
+      try {
+        const res = await fetch(`${apiBase}/bottles/${bottle.id}/status`, {
+          method: "PUT",
+          headers: authHeaders(),
+          body: JSON.stringify({ status: "stock" })
+        });
+        if (res.ok) {
+          formSuccess.value = "Bottle restored to stock!";
+          await fetchBottles();
+        } else {
+          const data = await res.json();
+          formError.value = data.error || "Failed to update status";
+        }
+      } catch (e) {
+        formError.value = "Network error";
+      }
+    }
+
     async function deleteBottle(bottle) {
-      if (!confirm(`Delete "${bottle.name}"?`)) return;
+      if (!confirm(`Delete "${bottle.name}"? This is permanent.`)) return;
 
       formError.value = "";
       formSuccess.value = "";
@@ -384,7 +455,8 @@ const app = createApp({
         strength: result.strength || "",
         bottle_size: result.bottle_size || "",
         year_bottled: result.year_bottled || "",
-        price: ""
+        price: "",
+        catalog_name: result.name || ""
       };
       searchQuery.value = "";
       searchResults.value = [];
@@ -393,6 +465,7 @@ const app = createApp({
     return {
       isReady,
       accessDenied,
+      adminTab,
       loading,
       bottles,
       editingId,
@@ -409,6 +482,8 @@ const app = createApp({
       saveBottle,
       startEdit,
       cancelEdit,
+      markTasted,
+      restoreToStock,
       deleteBottle
     };
   }
