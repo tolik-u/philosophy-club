@@ -4,9 +4,9 @@ A members-only web application for a gentlemen's social club centered around fin
 
 ## Tech Stack
 
-**Backend** — Python / Flask / MongoDB
+**Backend** — Python / Flask / MongoDB, deployed on AWS Lambda via Terraform
 
-**Frontend** — Vue 3 (CDN) / Pico CSS / Google Sign-In
+**Frontend** — Vue 3 (CDN) / Pico CSS / Google Sign-In, hosted on GitHub Pages
 
 ## Project Structure
 
@@ -19,6 +19,7 @@ docs/          Static frontend (no build step, served via GitHub Pages)
   admin.html   Admin panel page
   admin.js     Admin panel logic
   style.css    Custom styling
+infra/         Terraform configuration (Lambda, API Gateway, IAM)
 run-local.sh   Local dev script (Linux/macOS)
 run-local.bat  Local dev script (Windows)
 ```
@@ -104,6 +105,22 @@ Then open `http://localhost:8000` in your browser.
 | DELETE | /bottles/:id          | admin | Delete a bottle                |
 | GET    | /whiskies/search?q=   | admin | Search whisky catalog          |
 | GET    | /health               |       | Health check                   |
+
+## Deployment
+
+The backend deploys automatically to AWS Lambda when changes are pushed to `main` (paths: `be/**`, `infra/**`). The GitHub Actions workflow installs dependencies, packages the Lambda, and runs `terraform apply`.
+
+**Infrastructure** (managed by Terraform):
+- AWS Lambda (Python 3.11)
+- API Gateway HTTP API with CORS
+- CloudWatch log group (7-day retention)
+- S3 bucket for Terraform state (`philosophy-club-tfstate`)
+
+**Required GitHub Secrets:**
+- `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` — IAM credentials
+- `AWS_REGION` — e.g. `eu-west-1`
+- `MONGODB_URL` — MongoDB Atlas connection string
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — Google OAuth credentials
 
 ## License
 
