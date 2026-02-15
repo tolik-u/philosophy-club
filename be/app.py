@@ -74,7 +74,7 @@ def require_admin(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         user = db["users"].find_one({"email": request.user_email})
-        if not user or user.get("role") != "admin":
+        if not user or user.get("role") not in ("admin", "superadmin"):
             return jsonify({"error": "Admin access required"}), 403
         return f(*args, **kwargs)
     return decorated
@@ -112,7 +112,7 @@ def login():
         
         # New user - first user is admin
         user_count = users.count_documents({})
-        role = "admin" if user_count == 0 else "user"
+        role = "superadmin" if user_count == 0 else "user"
         
         # Create user
         users.insert_one({
@@ -122,7 +122,7 @@ def login():
             "created_at": datetime.utcnow().isoformat()
         })
         
-        message = "First user - admin created!" if role == "admin" else "User created"
+        message = "First user - superadmin created!" if role == "superadmin" else "User created"
         return jsonify({
             "email": email,
             "name": name,
@@ -159,6 +159,12 @@ def update_user_role(email):
     try:
         if email == request.user_email:
             return jsonify({"error": "Cannot change your own role"}), 400
+
+        target = db["users"].find_one({"email": email})
+        if not target:
+            return jsonify({"error": "User not found"}), 404
+        if target.get("role") == "superadmin":
+            return jsonify({"error": "Cannot change a superadmin's role"}), 403
 
         data = request.get_json()
         new_role = data.get("role")

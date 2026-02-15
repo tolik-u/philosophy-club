@@ -33,7 +33,7 @@ const app = createApp({
               <div><strong>{{ userName || 'Guest' }}</strong></div>
               <div class="email-small">{{ userEmail }}</div>
             </li>
-            <li v-if="userRole === 'admin'"><button @click="goToAdminPanel" class="btn-admin">Admin Panel</button></li>
+            <li v-if="userRole === 'admin' || userRole === 'superadmin'"><button @click="goToAdminPanel" class="btn-admin">Admin Panel</button></li>
             <li><button @click="logout" class="btn-logout">Logout</button></li>
           </ul>
         </nav>

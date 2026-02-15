@@ -115,16 +115,16 @@ const app = createApp({
                   <tr v-for="user in users" :key="user.email">
                     <td>{{ user.name }}</td>
                     <td>{{ user.email }}</td>
-                    <td><strong :style="{ color: user.role === 'admin' ? 'var(--color-gold)' : '#d0d0d0' }">{{ user.role }}</strong></td>
+                    <td><strong :style="{ color: user.role === 'superadmin' ? '#ff6b6b' : user.role === 'admin' ? 'var(--color-gold)' : '#d0d0d0' }">{{ user.role }}</strong></td>
                     <td>
                       <button
-                        v-if="user.email !== currentEmail"
+                        v-if="user.email !== currentEmail && user.role !== 'superadmin'"
                         :class="user.role === 'admin' ? 'btn-delete' : 'btn-edit'"
                         @click="toggleRole(user)"
                       >
                         {{ user.role === 'admin' ? 'Demote' : 'Promote' }}
                       </button>
-                      <span v-else style="color: #a0a0a0; font-size: 0.85rem;">You</span>
+                      <span v-else-if="user.email === currentEmail" style="color: #a0a0a0; font-size: 0.85rem;">You</span>
                     </td>
                   </tr>
                 </tbody>
@@ -194,7 +194,7 @@ const app = createApp({
     });
 
     // Check auth
-    if (!token || role !== "admin") {
+    if (!token || (role !== "admin" && role !== "superadmin")) {
       accessDenied.value = true;
     } else {
       isReady.value = true;
