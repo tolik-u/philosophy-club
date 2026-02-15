@@ -3,7 +3,7 @@ name: Deploy Backend to AWS Lambda
 on:
   push:
     branches: [main]
-    paths: ["be/**"]
+    paths: ["be/**", "infra/**"]
 
 jobs:
   deploy:
@@ -15,9 +15,12 @@ jobs:
         with:
           python-version: "3.11"
 
-      - uses: aws-actions/setup-sam@v2
-        with:
-          use-installer: true
+      - name: Install dependencies into package directory
+        run: |
+          pip install -r be/requirements.txt -t be/pkg/
+          cp be/app.py be/pkg/
+
+      - uses: hashicorp/setup-terraform@v3
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -25,17 +28,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: SAM build
-        run: sam build --use-container
-        working-directory: be
+      - name: Terraform Init
+        run: terraform init
+        working-directory: infra
 
-      - name: SAM deploy
+      - name: Terraform Apply
         run: |
-          sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --resolve-s3 \
-            --stack-name philosophy-club-backend \
-            --capabilities CAPABILITY_IAM \
-            --parameter-overrides \
-              MongoDbUrl="${{ secrets.MONGODB_URL }}" \
-              GoogleClientId="${{ secrets.GOOGLE_CLIENT_ID }}" \
-              GoogleClientSecret="${{ secrets.GOOGLE_CLIENT_SECRET }}"
-        working-directory: be
+          terraform apply -auto-approve \
+            -var="mongodb_url=${{ secrets.MONGODB_URL }}" \
+            -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" \
+            -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}"
+        working-directory: infra
