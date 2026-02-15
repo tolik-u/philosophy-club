@@ -221,17 +221,31 @@ article p {
 
 /* ============= Google Sign-In Button ============= */
 
-#google_button_container {
+.btn-google-signin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1.5rem;
+  background: #fff;
+  color: #3c4043;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, background 0.2s ease;
+  min-width: 220px;
   margin-top: 1rem;
 }
 
-#google_button_container div {
-  display: flex;
-  justify-content: center;
+.btn-google-signin:hover {
+  background: #f7f8f8;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-#google_button_container button {
-  min-width: 200px;
+.btn-google-signin:active {
+  background: #eee;
 }
 
 /* ============= Logout Button ============= */

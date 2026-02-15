@@ -7,6 +7,7 @@ from bson import ObjectId
 from datetime import datetime
 from functools import wraps
 import os
+import requests as http_requests
 from dotenv import load_dotenv
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
@@ -28,6 +29,7 @@ GOOGLE_CLIENT_ID = os.getenv(
     "GOOGLE_CLIENT_ID",
     "256483321761-a4hsvv36hbeslq1l3vjm0souh7988fir.apps.googleusercontent.com"
 )
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 
 print("\n========================================")
 print("  Philosophy Club Backend Starting...  ")
@@ -43,11 +45,30 @@ except Exception as e:
 
 # ============= Helper Functions =============
 
+def exchange_code_for_token(code):
+    """Exchange an authorization code for an ID token via Google's token endpoint"""
+    try:
+        resp = http_requests.post("https://oauth2.googleapis.com/token", data={
+            "code": code,
+            "client_id": GOOGLE_CLIENT_ID,
+            "client_secret": GOOGLE_CLIENT_SECRET,
+            "redirect_uri": "postmessage",
+            "grant_type": "authorization_code",
+        })
+        if resp.status_code != 200:
+            print(f"[!] Token exchange failed: {resp.status_code} {resp.text}")
+            return None
+        return resp.json().get("id_token")
+    except Exception as e:
+        print(f"[!] Token exchange error: {e}")
+        return None
+
 def verify_google_token(token):
     """Verify Google JWT token and return user info"""
     try:
         idinfo = id_token.verify_oauth2_token(
-            token, google_requests.Request(), GOOGLE_CLIENT_ID
+            token, google_requests.Request(), GOOGLE_CLIENT_ID,
+            clock_skew_in_seconds=5
         )
         return idinfo.get("email"), idinfo.get("name")
     except ValueError as e:
@@ -88,32 +109,39 @@ def login():
     try:
         data = request.get_json()
         token = data.get("token")
-        
+        code = data.get("code")
+
+        # New auth-code flow: exchange code for ID token
+        if code:
+            token = exchange_code_for_token(code)
+            if not token:
+                return jsonify({"error": "Code exchange failed"}), 401
+
         if not token:
-            return jsonify({"error": "Missing token"}), 400
-        
+            return jsonify({"error": "Missing token or code"}), 400
+
         # Verify token with Google and extract user info
         email, name = verify_google_token(token)
         if not email:
             return jsonify({"error": "Invalid token"}), 401
-        
+
         users = db["users"]
-        
+
         # Check if user exists
         existing_user = users.find_one({"email": email})
-        
+
         if existing_user:
-            # User already exists
             return jsonify({
                 "email": email,
                 "name": existing_user.get("name"),
-                "role": existing_user["role"]
+                "role": existing_user["role"],
+                "id_token": token
             }), 200
-        
+
         # New user - first user is admin
         user_count = users.count_documents({})
         role = "superadmin" if user_count == 0 else "user"
-        
+
         # Create user
         users.insert_one({
             "email": email,
@@ -121,15 +149,16 @@ def login():
             "role": role,
             "created_at": datetime.utcnow().isoformat()
         })
-        
+
         message = "First user - superadmin created!" if role == "superadmin" else "User created"
         return jsonify({
             "email": email,
             "name": name,
             "role": role,
-            "message": message
+            "message": message,
+            "id_token": token
         }), 200
-    
+
     except Exception as e:
         print(f"[!] Login error: {e}")
         return jsonify({"error": "Login failed"}), 500
