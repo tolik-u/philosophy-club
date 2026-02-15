@@ -1,0 +1,41 @@
+name: Deploy Backend to AWS Lambda
+
+on:
+  push:
+    branches: [main]
+    paths: ["be/**"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: SAM build
+        run: sam build --use-container
+        working-directory: be
+
+      - name: SAM deploy
+        run: |
+          sam deploy --no-confirm-changeset --no-fail-on-empty-changeset \
+            --stack-name philosophy-club-backend \
+            --capabilities CAPABILITY_IAM \
+            --parameter-overrides \
+              MongoDbUrl="${{ secrets.MONGODB_URL }}" \
+              GoogleClientId="${{ secrets.GOOGLE_CLIENT_ID }}" \
+              GoogleClientSecret="${{ secrets.GOOGLE_CLIENT_SECRET }}"
+        working-directory: be

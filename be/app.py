@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+from mangum import Mangum
 from pymongo import MongoClient
 from bson import ObjectId
 from datetime import datetime
@@ -18,7 +17,6 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app, origins=["https://club.linux.yoga", "http://localhost:8000"])
-limiter = Limiter(get_remote_address, app=app, default_limits=["60 per minute"], storage_uri="memory://")
 
 # MongoDB setup
 MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://127.0.0.1:27017")
@@ -103,7 +101,6 @@ def require_admin(f):
 # ============= Authentication Endpoints =============
 
 @app.route("/login", methods=["POST"])
-@limiter.limit("10 per minute")
 def login():
     """Google login endpoint"""
     try:
@@ -182,7 +179,6 @@ def list_users():
 @app.route("/users/<path:email>/role", methods=["PUT"])
 @require_auth
 @require_admin
-@limiter.limit("10 per minute")
 def update_user_role(email):
     """Promote or demote a user (admin only, cannot change own role)"""
     try:
@@ -217,7 +213,6 @@ def update_user_role(email):
 @app.route("/whiskies/search", methods=["GET"])
 @require_auth
 @require_admin
-@limiter.limit("60 per minute")
 def search_whiskies():
     """Search the whiskies catalog using Atlas Search (admin only)"""
     try:
@@ -283,7 +278,6 @@ def get_bottles():
 @app.route("/bottles", methods=["POST"])
 @require_auth
 @require_admin
-@limiter.limit("30 per minute")
 def create_bottle():
     """Create a new bottle (admin only)"""
     try:
@@ -320,7 +314,6 @@ def create_bottle():
 @app.route("/bottles/<bottle_id>", methods=["PUT"])
 @require_auth
 @require_admin
-@limiter.limit("30 per minute")
 def update_bottle(bottle_id):
     """Update a bottle (admin only)"""
     try:
@@ -366,7 +359,6 @@ def update_bottle(bottle_id):
 @app.route("/bottles/<bottle_id>", methods=["DELETE"])
 @require_auth
 @require_admin
-@limiter.limit("30 per minute")
 def delete_bottle(bottle_id):
     """Delete a bottle (admin only)"""
     try:
@@ -396,6 +388,8 @@ def server_error(e):
     return jsonify({"error": "Internal server error"}), 500
 
 # ============= Main =============
+
+handler = Mangum(app)
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8080))

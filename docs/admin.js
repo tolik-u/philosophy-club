@@ -171,7 +171,7 @@ const app = createApp({
   `,
 
   setup() {
-    const apiBase = location.hostname === "localhost" ? "http://localhost:8080" : "https://philosophy-club.onrender.com";
+    const apiBase = location.hostname === "localhost" ? "http://localhost:8080" : "https://REPLACE_AFTER_FIRST_DEPLOY.execute-api.eu-west-1.amazonaws.com";
     const isReady = ref(false);
     const accessDenied = ref(false);
     const loading = ref(true);
