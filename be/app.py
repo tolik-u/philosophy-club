@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from mangum import Mangum
+from apig_wsgi import make_lambda_handler
 from pymongo import MongoClient
 from bson import ObjectId
 from datetime import datetime
@@ -389,7 +389,7 @@ def server_error(e):
 
 # ============= Main =============
 
-handler = Mangum(app)
+handler = make_lambda_handler(app)
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8080))
